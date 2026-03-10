@@ -28,6 +28,7 @@ import { BigscreenBeyondHardwareBrightnessControlDriver } from './hardware-brigh
 import { AppSettingsService } from '../app-settings.service';
 import { AppSettings } from '../../models/settings';
 import { clamp } from '../../utils/number-utils';
+import { ResearchLogService } from '../research-log.service';
 
 @Injectable({
   providedIn: 'root',
@@ -60,7 +61,8 @@ export class HardwareBrightnessControlService {
 
   constructor(
     openvr: OpenVRService,
-    private appSettingsService: AppSettingsService // private bsbFanAutomationService: BigscreenBeyondFanAutomationService
+    private appSettingsService: AppSettingsService, // private bsbFanAutomationService: BigscreenBeyondFanAutomationService
+    private researchLog: ResearchLogService
   ) {
     this.driverValveIndex = new ValveIndexHardwareBrightnessControlDriver(
       this.appSettingsService.settings,
@@ -99,7 +101,10 @@ export class HardwareBrightnessControlService {
       )
       .subscribe();
     await listen<number>('setHardwareBrightness', async (event) => {
-      await this.setBrightness(event.payload, { cancelActiveTransition: true });
+      await this.setBrightness(event.payload, {
+        cancelActiveTransition: true,
+        researchSource: 'user_overlay',
+      });
     });
     await this.initializeSafetyChecks();
   }
@@ -160,8 +165,20 @@ export class HardwareBrightnessControlService {
     if (!driver) return;
     if (opt.cancelActiveTransition) this.cancelActiveTransition();
     if (!force && percentage == this.brightness) return;
+    const oldBrightness = this.brightness;
     this._brightness.next(percentage);
     await driver.setBrightnessPercentage(percentage);
+    this.researchLog.logBrightnessChanged(
+      'hardware',
+      opt.logReason ? 'automation' : ((opt.researchSource as any) ?? 'unknown'),
+      {
+        old_value: oldBrightness,
+        new_value: percentage,
+        reason: opt.logReason,
+        transition: false,
+        source_detail: opt.researchSource ?? undefined,
+      }
+    );
     if (opt.logReason) {
       await info(
         `[BrightnessControl] Set hardware brightness to ${percentage}% (Reason: ${opt.logReason})`

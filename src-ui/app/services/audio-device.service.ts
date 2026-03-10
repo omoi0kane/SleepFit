@@ -4,6 +4,8 @@ import { AudioDevice, AudioDeviceParsedName } from '../models/audio-device';
 import { BehaviorSubject } from 'rxjs';
 import { listen } from '@tauri-apps/api/event';
 import { clamp } from '../utils/number-utils';
+import { ResearchLogService } from './research-log.service';
+import { ResearchEventSource } from '../models/research-log';
 
 const PERSISTENT_ID_LEAD = 'AUDIO_DEVICE_[';
 const PERSISTENT_ID_TRAIL = ']';
@@ -15,7 +17,7 @@ export class AudioDeviceService {
   private readonly _activeDevices = new BehaviorSubject<AudioDevice[]>([]);
   public readonly activeDevices = this._activeDevices.asObservable();
 
-  constructor() {}
+  constructor(private researchLog: ResearchLogService) {}
 
   async init() {
     await this.getAudioDevices();
@@ -43,11 +45,27 @@ export class AudioDeviceService {
     this._activeDevices.next(devices);
   }
 
-  async setVolume(deviceId: string, volume: number) {
+  async setVolume(
+    deviceId: string,
+    volume: number,
+    source: ResearchEventSource = 'unknown',
+    reason?: string | null
+  ) {
     if (!this.isActiveDevice(deviceId)) return;
     volume = clamp(volume, 0, 1);
+    const device = this._activeDevices.value.find((d) => d.id === deviceId) ?? null;
+    const oldVolume = device?.volume ?? null;
     this.patchDevice(deviceId, { volume });
     await invoke('set_audio_device_volume', { deviceId, volume });
+    this.researchLog.logVolumeChanged(source, {
+      device_id: deviceId,
+      device_name: device?.name,
+      device_type: device?.deviceType ?? 'unknown',
+      old_value: oldVolume,
+      new_value: volume,
+      reason: reason ?? null,
+      source_detail: source,
+    });
   }
 
   async setMute(

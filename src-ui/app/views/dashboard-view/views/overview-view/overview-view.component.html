@@ -37,7 +37,7 @@
               (sleepPreparation.sleepPreparationAvailable | async) === false ||
               (sleepPreparation.sleepPreparationTimedOut | async)
             "
-            (click)="sleepPreparation.prepareForSleep()"
+            (click)="prepareForSleep()"
           >
             @if (sleepPreparation.sleepPreparationTimedOut | async) {
               <div class="small-spinner" @hshrink></div>

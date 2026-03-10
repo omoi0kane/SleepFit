@@ -3,6 +3,8 @@ import { BehaviorSubject, firstValueFrom, map, shareReplay, Subject } from 'rxjs
 import { AutomationConfigService } from './automation-config.service';
 import { listen } from '@tauri-apps/api/event';
 import { info } from '@tauri-apps/plugin-log';
+import { ResearchLogService } from './research-log.service';
+import { ResearchEventSource } from '../models/research-log';
 
 const SLEEP_PREPARATION_TIMEOUT = 5000;
 
@@ -42,22 +44,34 @@ export class SleepPreparationService {
     shareReplay(1)
   );
 
-  constructor(private automationConfigService: AutomationConfigService) {}
+  constructor(
+    private automationConfigService: AutomationConfigService,
+    private researchLog: ResearchLogService
+  ) {}
 
   public async init() {
     await listen('prepareForSleep', async () => {
-      await this.prepareForSleep();
+      await this.prepareForSleep('user_overlay');
     });
   }
 
-  public async prepareForSleep() {
+  public async prepareForSleep(source: ResearchEventSource = 'unknown') {
     if (
       (await firstValueFrom(this.sleepPreparationAvailable)) &&
       !this._sleepPreparationTimedOut.value
     ) {
       this._sleepPreparationTimedOut.next(true);
       this._onSleepPreparation.next();
+      this.researchLog.logSleepPreparationStarted(source, {
+        available: true,
+        cooldown_active: true,
+      });
       setTimeout(() => this._sleepPreparationTimedOut.next(false), SLEEP_PREPARATION_TIMEOUT);
+      setTimeout(() => {
+        this.researchLog.logSleepPreparationTimedOut({
+          timeout_ms: SLEEP_PREPARATION_TIMEOUT,
+        });
+      }, SLEEP_PREPARATION_TIMEOUT);
       await info('[SleepPreparation] Running sleep preparation automations');
     }
   }

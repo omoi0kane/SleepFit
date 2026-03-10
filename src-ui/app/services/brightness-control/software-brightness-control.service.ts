@@ -9,6 +9,7 @@ import {
   SetBrightnessOrCCTOptions,
 } from './brightness-control-models';
 import { listen } from '@tauri-apps/api/event';
+import { ResearchLogService } from '../research-log.service';
 
 export const DEFAULT_SOFTWARE_BRIGHTNESS_GAMMA = 0.55;
 
@@ -27,7 +28,7 @@ export class SoftwareBrightnessControlService {
 
   public readonly brightnessStream: Observable<number> = this._brightness.asObservable();
 
-  constructor() {}
+  constructor(private researchLog: ResearchLogService) {}
 
   public set perceivedBrightnessAdjustmentGamma(value: number | null) {
     this._perceivedBrightnessAdjustmentGamma = value;
@@ -41,7 +42,10 @@ export class SoftwareBrightnessControlService {
   async init() {
     await this.setSoftwareBrightness(this.brightness);
     await listen<number>('setSoftwareBrightness', async (event) => {
-      await this.setBrightness(event.payload, { cancelActiveTransition: true });
+      await this.setBrightness(event.payload, {
+        cancelActiveTransition: true,
+        researchSource: 'user_overlay',
+      });
     });
   }
 
@@ -105,8 +109,20 @@ export class SoftwareBrightnessControlService {
     const opt = { ...SET_BRIGHTNESS_OR_CCT_OPTIONS_DEFAULTS, ...(options ?? {}) };
     if (opt.cancelActiveTransition) this.cancelActiveTransition();
     if (percentage == this.brightness) return;
+    const oldBrightness = this.brightness;
     this._brightness.next(percentage);
     await this.setSoftwareBrightness(percentage);
+    this.researchLog.logBrightnessChanged(
+      'software',
+      opt.logReason ? 'automation' : ((opt.researchSource as any) ?? 'unknown'),
+      {
+        old_value: oldBrightness,
+        new_value: percentage,
+        reason: opt.logReason,
+        transition: false,
+        source_detail: opt.researchSource ?? undefined,
+      }
+    );
     if (opt.logReason) {
       await info(
         `[BrightnessControl] Set software brightness to ${percentage}% (Reason: ${opt.logReason})`

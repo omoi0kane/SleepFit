@@ -22,6 +22,7 @@ import {
   SetBrightnessOrCCTOptions,
 } from './brightness-control-models';
 import { listen } from '@tauri-apps/api/event';
+import { ResearchLogService } from '../research-log.service';
 
 @Injectable({
   providedIn: 'root',
@@ -43,12 +44,16 @@ export class SimpleBrightnessControlService {
   constructor(
     private automationConfigService: AutomationConfigService,
     private hardwareBrightnessControl: HardwareBrightnessControlService,
-    private softwareBrightnessControl: SoftwareBrightnessControlService
+    private softwareBrightnessControl: SoftwareBrightnessControlService,
+    private researchLog: ResearchLogService
   ) {}
 
   async init() {
     await listen<number>('setSimpleBrightness', async (event) => {
-      await this.setBrightness(event.payload, { cancelActiveTransition: true });
+      await this.setBrightness(event.payload, {
+        cancelActiveTransition: true,
+        researchSource: 'user_overlay',
+      });
     });
     // Set brightness when switching to simple mode
     this.automationConfigService.configs
@@ -135,6 +140,7 @@ export class SimpleBrightnessControlService {
     const opt = { ...SET_BRIGHTNESS_OR_CCT_OPTIONS_DEFAULTS, ...(options ?? {}) };
     percentage = clamp(percentage, 0, 100);
     if (opt.cancelActiveTransition) this.cancelActiveTransition();
+    const oldBrightness = this.brightness;
     this._brightness.next(percentage);
     if (opt.logReason) {
       await info(`[BrightnessControl] Set brightness to ${percentage}% (Reason: ${opt.logReason})`);
@@ -167,12 +173,25 @@ export class SimpleBrightnessControlService {
     await this.softwareBrightnessControl.setBrightness(softwareBrightness, {
       cancelActiveTransition: true,
       logReason: null,
+      researchSource: opt.researchSource,
     });
     if (this.hardwareBrightnessDriverAvailable) {
       await this.hardwareBrightnessControl.setBrightness(hardwareBrightness, {
         cancelActiveTransition: true,
         logReason: null,
+        researchSource: opt.researchSource,
       });
     }
+    this.researchLog.logBrightnessChanged(
+      'simple',
+      opt.logReason ? 'automation' : ((opt.researchSource as any) ?? 'unknown'),
+      {
+        old_value: oldBrightness,
+        new_value: percentage,
+        reason: opt.logReason,
+        transition: false,
+        source_detail: opt.researchSource ?? undefined,
+      }
+    );
   }
 }

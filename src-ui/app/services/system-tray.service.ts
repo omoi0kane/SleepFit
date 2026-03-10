@@ -83,9 +83,9 @@ export class SystemTrayService {
           checked: await firstValueFrom(this.sleepService.mode),
           action: async () => {
             if (await firstValueFrom(this.sleepService.mode)) {
-              this.sleepService.disableSleepMode({ type: 'MANUAL' });
+              this.sleepService.disableSleepMode({ type: 'MANUAL' }, 'user_tray');
             } else {
-              this.sleepService.enableSleepMode({ type: 'MANUAL' });
+              this.sleepService.enableSleepMode({ type: 'MANUAL' }, 'user_tray');
             }
           },
         },
@@ -95,7 +95,7 @@ export class SystemTrayService {
             (await firstValueFrom(this.sleepPreparationService.sleepPreparationAvailable)) &&
             !(await firstValueFrom(this.sleepPreparationService.sleepPreparationTimedOut)),
           action: async () => {
-            await this.sleepPreparationService.prepareForSleep();
+            await this.sleepPreparationService.prepareForSleep('user_tray');
           },
         },
         {

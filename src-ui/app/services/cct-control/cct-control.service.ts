@@ -19,6 +19,7 @@ import { getCSSColorForCCT } from 'src-shared-ts/src/cct-utils';
 import { OpenVRService } from '../openvr.service';
 import { clamp } from '../../utils/number-utils';
 import { AppSettingsService } from '../app-settings.service';
+import { ResearchLogService } from '../research-log.service';
 
 @Injectable({
   providedIn: 'root',
@@ -40,7 +41,8 @@ export class CCTControlService {
 
   constructor(
     private openvr: OpenVRService,
-    private appSettingsService: AppSettingsService
+    private appSettingsService: AppSettingsService,
+    private researchLog: ResearchLogService
   ) {}
 
   async init() {
@@ -68,7 +70,10 @@ export class CCTControlService {
       this.cctCSSColor = getCSSColorForCCT(cct);
     });
     await listen<number>('setColorTemperature', async (event) => {
-      await this.setCCT(event.payload, { cancelActiveTransition: true });
+      await this.setCCT(event.payload, {
+        cancelActiveTransition: true,
+        researchSource: 'user_overlay',
+      });
     });
   }
 
@@ -123,8 +128,19 @@ export class CCTControlService {
     cct = clamp(Math.round(cct), 1000, 10000);
     if (opt.cancelActiveTransition) this.cancelActiveTransition();
     if (cct === this.cct && !force) return;
+    const oldCct = this.cct;
     this._cct.next(cct);
     if (this.hardwareReady) invoke('openvr_set_analog_color_temp', { temperature: cct });
+    this.researchLog.logColorTemperatureChanged(
+      opt.logReason ? 'automation' : ((opt.researchSource as any) ?? 'unknown'),
+      {
+        old_value: oldCct,
+        new_value: cct,
+        reason: opt.logReason,
+        transition: false,
+        source_detail: opt.researchSource ?? undefined,
+      }
+    );
     if (opt.logReason) {
       await info(`[CCTControl] Set CCT to ${cct}K (Reason: ${opt.logReason})`);
     }

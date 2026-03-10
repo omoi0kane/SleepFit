@@ -44,6 +44,7 @@ import { error } from '@tauri-apps/plugin-log';
 import { listen } from '@tauri-apps/api/event';
 import { OpenVRService } from './openvr.service';
 import { invoke } from '@tauri-apps/api/core';
+import { ResearchLogService } from './research-log.service';
 
 @Injectable({
   providedIn: 'root',
@@ -100,7 +101,8 @@ export class BrightnessCctAutomationService {
     private cctControl: CCTControlService,
     private eventLog: EventLogService,
     private sleepPreparation: SleepPreparationService,
-    private openvr: OpenVRService
+    private openvr: OpenVRService,
+    private researchLog: ResearchLogService
   ) {}
 
   async init() {
@@ -445,6 +447,12 @@ export class BrightnessCctAutomationService {
   ) {
     // Stop if the automation is disabled
     if (!config.enabled || (!config.changeBrightness && !config.changeColorTemperature)) return;
+    this.researchLog.logAutomationFired('BRIGHTNESS_AUTOMATIONS', {
+      automation_event: automationType,
+      reason: automationType,
+      target:
+        runBrightness && runCCT ? 'brightness_and_cct' : runBrightness ? 'brightness' : 'cct',
+    });
     // Determine the log reason
     const eventLogReasonMap: Record<BrightnessEvent, SetBrightnessOrCCTReason> = {
       SLEEP_MODE_ENABLE: 'SLEEP_MODE_ENABLE',

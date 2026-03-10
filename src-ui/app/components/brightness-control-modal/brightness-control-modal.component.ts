@@ -61,21 +61,39 @@ export class BrightnessControlModalComponent
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         throttleTime(1000 / 30, asyncScheduler, { leading: true, trailing: true }),
-        switchMap((percentage) => this.hardwareBrightnessControl.setBrightness(percentage))
+        switchMap((percentage) =>
+          this.hardwareBrightnessControl.setBrightness(percentage, {
+            cancelActiveTransition: true,
+            logReason: null,
+            researchSource: 'user_desktop_ui',
+          })
+        )
       )
       .subscribe();
     this.setSoftwareBrightness
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         throttleTime(1000 / 30, asyncScheduler, { leading: true, trailing: true }),
-        switchMap((percentage) => this.softwareBrightnessControl.setBrightness(percentage))
+        switchMap((percentage) =>
+          this.softwareBrightnessControl.setBrightness(percentage, {
+            cancelActiveTransition: true,
+            logReason: null,
+            researchSource: 'user_desktop_ui',
+          })
+        )
       )
       .subscribe();
     this.setSimpleBrightness
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         throttleTime(1000 / 30, asyncScheduler, { leading: true, trailing: true }),
-        switchMap((percentage) => this.simpleBrightnessControl.setBrightness(percentage))
+        switchMap((percentage) =>
+          this.simpleBrightnessControl.setBrightness(percentage, {
+            cancelActiveTransition: true,
+            logReason: null,
+            researchSource: 'user_desktop_ui',
+          })
+        )
       )
       .subscribe();
   }

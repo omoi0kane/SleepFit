@@ -36,19 +36,19 @@ export class HotkeyHandlerService {
       switch (hotkey) {
         case 'HOTKEY_TOGGLE_SLEEP_MODE':
           if (await firstValueFrom(this.sleep.mode)) {
-            await this.sleep.disableSleepMode({ type: 'HOTKEY' });
+            await this.sleep.disableSleepMode({ type: 'HOTKEY' }, 'user_hotkey');
           } else {
-            await this.sleep.enableSleepMode({ type: 'HOTKEY' });
+            await this.sleep.enableSleepMode({ type: 'HOTKEY' }, 'user_hotkey');
           }
           break;
         case 'HOTKEY_ENABLE_SLEEP_MODE':
-          await this.sleep.enableSleepMode({ type: 'HOTKEY' });
+          await this.sleep.enableSleepMode({ type: 'HOTKEY' }, 'user_hotkey');
           break;
         case 'HOTKEY_DISABLE_SLEEP_MODE':
-          await this.sleep.disableSleepMode({ type: 'HOTKEY' });
+          await this.sleep.disableSleepMode({ type: 'HOTKEY' }, 'user_hotkey');
           break;
         case 'HOTKEY_RUN_SLEEP_PREPARATION':
-          await this.sleepPreparation.prepareForSleep();
+          await this.sleepPreparation.prepareForSleep('user_hotkey');
           break;
         case 'HOTKEY_RUN_SHUTDOWN_SEQUENCE':
           await this.shutdownSequence.runSequence('HOTKEY');

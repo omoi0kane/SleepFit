@@ -91,9 +91,9 @@ export class MainStatusBarComponent implements OnInit {
 
   async toggleSleepMode() {
     if (await firstValueFrom(this.sleepService.mode)) {
-      await this.sleepService.disableSleepMode({ type: 'MANUAL' });
+      await this.sleepService.disableSleepMode({ type: 'MANUAL' }, 'user_desktop_ui');
     } else {
-      await this.sleepService.enableSleepMode({ type: 'MANUAL' });
+      await this.sleepService.enableSleepMode({ type: 'MANUAL' }, 'user_desktop_ui');
     }
   }
 

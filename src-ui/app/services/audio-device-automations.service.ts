@@ -18,6 +18,7 @@ import {
   EventLogMutedAudioDevice,
   EventLogUnmutedAudioDevice,
 } from '../models/event-log-entry';
+import { ResearchLogService } from './research-log.service';
 
 @Injectable({
   providedIn: 'root',
@@ -32,7 +33,8 @@ export class AudioDeviceAutomationsService {
     private sleepPreparationService: SleepPreparationService,
     private automationConfigService: AutomationConfigService,
     private audioDeviceService: AudioDeviceService,
-    private eventLog: EventLogService
+    private eventLog: EventLogService,
+    private researchLog: ResearchLogService
   ) {}
 
   async init() {
@@ -143,12 +145,22 @@ export class AudioDeviceAutomationsService {
       automation.audioDeviceRef.persistentId
     );
     if (device) {
+      this.researchLog.logAutomationFired('AUDIO_DEVICE_AUTOMATIONS', {
+        automation_event: reason,
+        reason,
+        target: automation.type,
+      });
       const deviceName = device.parsedName!.driver
         ? `${device.parsedName?.display} (${device.parsedName?.driver})`
         : device.parsedName!.display;
       switch (automation.type) {
         case 'SET_VOLUME':
-          await this.audioDeviceService.setVolume(device.id, automation.volume / 100);
+          await this.audioDeviceService.setVolume(
+            device.id,
+            automation.volume / 100,
+            'automation',
+            reason
+          );
           info(
             `[AudioDeviceAutomations] Set volume of ${automation.audioDeviceRef.type.toLowerCase()} device '${deviceName}' to ${
               automation.volume

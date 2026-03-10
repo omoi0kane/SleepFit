@@ -27,6 +27,8 @@ import { EventLogService } from './event-log.service';
 import { EventLogSleepModeDisabled, EventLogSleepModeEnabled } from '../models/event-log-entry';
 import { AppSettingsService } from './app-settings.service';
 import { listen } from '@tauri-apps/api/event';
+import { ResearchLogService } from './research-log.service';
+import { ResearchEventSource } from '../models/research-log';
 
 @Injectable({
   providedIn: 'root',
@@ -70,7 +72,8 @@ export class SleepService {
     private notifications: NotificationService,
     private eventLog: EventLogService,
     private appSettings: AppSettingsService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private researchLog: ResearchLogService
   ) {}
 
   async init() {
@@ -92,9 +95,9 @@ export class SleepService {
     // Handle events
     await listen<boolean>('setSleepMode', (e) => {
       if (e.payload) {
-        this.enableSleepMode({ type: 'MANUAL' });
+        this.enableSleepMode({ type: 'MANUAL' }, 'user_overlay');
       } else {
-        this.disableSleepMode({ type: 'MANUAL' });
+        this.disableSleepMode({ type: 'MANUAL' }, 'user_overlay');
       }
     });
   }
@@ -107,7 +110,10 @@ export class SleepService {
     return this.poseDetector.getScene();
   }
 
-  async enableSleepMode(reason: SleepModeStatusChangeReason) {
+  async enableSleepMode(
+    reason: SleepModeStatusChangeReason,
+    source: ResearchEventSource = 'unknown'
+  ) {
     if (this._mode.value) return;
     reason.enabled = true;
     info(`[Sleep] Sleep mode enabled (reason=${reason.type})`);
@@ -117,6 +123,10 @@ export class SleepService {
     } as EventLogSleepModeEnabled);
     this._mode.next(true);
     this._onSleepModeChange.next({ mode: true, reason });
+    this.researchLog.logSleepModeChange(true, this.mapResearchSource(reason, source), {
+      reason_type: reason.type,
+      automation_id: 'automation' in reason ? reason.automation : undefined,
+    });
     await SETTINGS_STORE.set(SETTINGS_KEY_SLEEP_MODE, true);
     if (await this.notifications.notificationTypeEnabled('SLEEP_MODE_ENABLED')) {
       await this.notifications.send(
@@ -125,7 +135,10 @@ export class SleepService {
     }
   }
 
-  async disableSleepMode(reason: SleepModeStatusChangeReason) {
+  async disableSleepMode(
+    reason: SleepModeStatusChangeReason,
+    source: ResearchEventSource = 'unknown'
+  ) {
     if (!this._mode.value) return;
     reason.enabled = false;
     info(`[Sleep] Sleep mode disabled (reason=${reason.type})`);
@@ -135,6 +148,10 @@ export class SleepService {
     } as EventLogSleepModeDisabled);
     this._mode.next(false);
     this._onSleepModeChange.next({ mode: false, reason });
+    this.researchLog.logSleepModeChange(false, this.mapResearchSource(reason, source), {
+      reason_type: reason.type,
+      automation_id: 'automation' in reason ? reason.automation : undefined,
+    });
     await SETTINGS_STORE.set(SETTINGS_KEY_SLEEP_MODE, false);
     if (await this.notifications.notificationTypeEnabled('SLEEP_MODE_DISABLED')) {
       await this.notifications.send(
@@ -147,5 +164,20 @@ export class SleepService {
     if (!pose) return this.poseDetector.sleepingPose;
     this.poseDetector.processOrientation(pose.quaternion);
     return this.poseDetector.sleepingPose;
+  }
+
+  private mapResearchSource(
+    reason: SleepModeStatusChangeReason,
+    fallback: ResearchEventSource
+  ): ResearchEventSource {
+    if (fallback !== 'unknown') return fallback;
+    switch (reason.type) {
+      case 'AUTOMATION':
+        return 'automation';
+      case 'HOTKEY':
+        return 'user_hotkey';
+      default:
+        return 'unknown';
+    }
   }
 }

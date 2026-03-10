@@ -39,10 +39,14 @@ export class OverviewViewComponent implements OnInit {
 
   async setSleepMode(enabled: boolean) {
     if (enabled) {
-      await this.sleep.enableSleepMode({ type: 'MANUAL' });
+      await this.sleep.enableSleepMode({ type: 'MANUAL' }, 'user_desktop_ui');
     } else {
-      await this.sleep.disableSleepMode({ type: 'MANUAL' });
+      await this.sleep.disableSleepMode({ type: 'MANUAL' }, 'user_desktop_ui');
     }
+  }
+
+  async prepareForSleep() {
+    await this.sleepPreparation.prepareForSleep('user_desktop_ui');
   }
 
   protected determineIllustrationPath(mouseover: boolean | null = null) {

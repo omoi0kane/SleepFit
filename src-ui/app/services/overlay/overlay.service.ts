@@ -14,6 +14,7 @@ import { APP_SETTINGS_DEFAULT, AppSettings } from '../../models/settings';
 import { OVRInputEventAction } from '../../models/ovr-input-event';
 import { invoke } from '@tauri-apps/api/core';
 import { VRChatService } from '../vrchat-api/vrchat.service';
+import { ResearchLogService } from '../research-log.service';
 
 @Injectable({
   providedIn: 'root',
@@ -26,7 +27,8 @@ export class OverlayService {
     private ipcService: IPCService,
     private openvrInput: OpenVRInputService,
     private appSettingsService: AppSettingsService,
-    private vrchat: VRChatService
+    private vrchat: VRChatService,
+    private researchLog: ResearchLogService
   ) {}
 
   async init() {
@@ -98,6 +100,9 @@ export class OverlayService {
         }
         // Toggle the overlay
         info('[Overlay] Toggling overlay menu (controller action)');
+        this.researchLog.logOverlayOpened('user_overlay', {
+          trigger: 'controller_action',
+        });
         this.ipcService.getOverlaySidecarClient()?.toggleOverlayMenu({
           controllerRole,
         } as OverlayMenuOpenRequest);

@@ -40,6 +40,7 @@ import { DeviceManagerService } from './device-manager.service';
 import { DMKnownDevice } from '../models/device-manager';
 import { LighthouseDevice } from '../models/lighthouse-device';
 import { OVRDevice } from '../models/ovr-device';
+import { ResearchLogService } from './research-log.service';
 
 export type ShutdownSequenceStage = (typeof ShutdownSequenceStageOrder)[number];
 export const ShutdownSequenceStageOrder = [
@@ -80,7 +81,8 @@ export class ShutdownAutomationsService {
     private eventLog: EventLogService,
     private translate: TranslateService,
     private vrchat: VRChatService,
-    private deviceManager: DeviceManagerService
+    private deviceManager: DeviceManagerService,
+    private researchLog: ResearchLogService
   ) {}
 
   async init() {
@@ -181,6 +183,10 @@ export class ShutdownAutomationsService {
     if (this._stage.value === 'IDLE' || this.cancelFlag) return;
     this.cancelFlag = true;
     this.cancelEvent.next();
+    this.researchLog.logAutomationCancelled('SHUTDOWN_AUTOMATIONS', {
+      reason,
+      target: 'shutdown_sequence',
+    });
     this.eventLog.logEvent({
       type: 'shutdownSequenceCancelled',
       reason,
@@ -195,6 +201,13 @@ export class ShutdownAutomationsService {
   async runSequence(reason: EventLogShutdownSequenceStartedReason) {
     const stages = this.getApplicableStages();
     if (this._stage.value !== 'IDLE' || !stages.length) return;
+    if (reason !== 'MANUAL') {
+      this.researchLog.logAutomationFired('SHUTDOWN_AUTOMATIONS', {
+        automation_event: reason,
+        reason,
+        target: 'shutdown_sequence',
+      });
+    }
     this.eventLog.logEvent({
       type: 'shutdownSequenceStarted',
       reason,

@@ -194,6 +194,7 @@ import { MqttConfigModalComponent } from './components/mqtt-config-modal/mqtt-co
 import { SleepDetectorCalibrationModalComponent } from './views/dashboard-view/views/sleep-detection-view/modals/sleep-detector-calibration-modal/sleep-detector-calibration-modal.component';
 import { TimeEnableSleepModeModalComponent } from './views/dashboard-view/views/sleep-detection-view/modals/time-enable-sleepmode-modal/time-enable-sleep-mode-modal.component';
 import { TimeDisableSleepModeModalComponent } from './views/dashboard-view/views/sleep-detection-view/modals/time-disable-sleepmode-modal/time-disable-sleep-mode-modal.component';
+import { ResearchLogService } from './services/research-log.service';
 import { DurationDisableSleepModeModalComponent } from './views/dashboard-view/views/sleep-detection-view/modals/duration-disable-sleepmode-modal/duration-disable-sleep-mode-modal.component';
 import { BatteryPercentageEnableSleepModeModalComponent } from './views/dashboard-view/views/sleep-detection-view/modals/battery-percentage-enable-sleepmode-modal/battery-percentage-enable-sleep-mode-modal.component';
 import { PlayerJoinLeaveDisableSleepModeModalComponent } from './views/dashboard-view/views/sleep-detection-view/modals/player-join-leave-disable-sleepmode-modal/player-join-leave-disable-sleep-mode-modal.component';
@@ -472,6 +473,7 @@ export class AppModule {
     private simpleBrightnessControlService: SimpleBrightnessControlService,
     private systemTrayService: SystemTrayService,
     private eventLog: EventLogService,
+    private researchLogService: ResearchLogService,
     private lighthouseService: LighthouseService,
     private developerDebugService: DeveloperDebugService,
     private ipcService: IPCService,
@@ -603,6 +605,7 @@ export class AppModule {
             this.logInit('Initializing automation config', this.automationConfigService.init()),
             this.logInit('Initializing deep linking', this.deepLinkService.init()),
           ]);
+          await this.logInit('Initializing research log', this.researchLogService.init());
           await this.logInit('Initializing system tray', this.systemTrayService.init());
           // Initialize telemetry
           await Promise.all([this.logInit('Initializing telemetry', this.telemetryService.init())]);

@@ -31,7 +31,13 @@ export class CCTControlModalComponent extends BaseModalComponent<void, void> imp
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         throttleTime(1000 / 30, asyncScheduler, { leading: true, trailing: true }),
-        switchMap((cct) => this.cctControl.setCCT(cct))
+        switchMap((cct) =>
+          this.cctControl.setCCT(cct, {
+            cancelActiveTransition: true,
+            logReason: null,
+            researchSource: 'user_desktop_ui',
+          })
+        )
       )
       .subscribe();
   }
