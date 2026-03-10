@@ -15,12 +15,14 @@ pub static SYSTEMTRAY_MANAGER: LazyLock<Mutex<Option<SystemTrayManager>>> =
 #[derive(Debug, Clone)]
 pub struct SystemTrayManager {
     pub close_to_tray: bool,
+    pub allow_real_close_once: bool,
 }
 
 impl SystemTrayManager {
     pub fn new() -> SystemTrayManager {
         SystemTrayManager {
             close_to_tray: false,
+            allow_real_close_once: false,
         }
     }
 }
@@ -39,10 +41,18 @@ pub async fn init() {
 }
 
 pub fn handle_window_events(window: &tauri::Window, event: &tauri::WindowEvent) {
+    if window.label() != "main" {
+        return;
+    }
     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-        let manager_guard = futures::executor::block_on(SYSTEMTRAY_MANAGER.lock());
-        let manager = manager_guard.as_ref().unwrap();
-        handle_window_close_request(window, Some(api), manager.close_to_tray);
+        let mut manager_guard = futures::executor::block_on(SYSTEMTRAY_MANAGER.lock());
+        let manager = manager_guard.as_mut().unwrap();
+        handle_window_close_request(
+            window,
+            Some(api),
+            manager.close_to_tray,
+            &mut manager.allow_real_close_once,
+        );
     }
 }
 
@@ -84,13 +94,19 @@ fn handle_window_close_request<R: Runtime>(
     window: &tauri::Window<R>,
     api: Option<&tauri::CloseRequestApi>,
     close_to_tray: bool,
+    allow_real_close_once: &mut bool,
 ) {
     if close_to_tray {
         window.hide().unwrap();
         if let Some(api) = api {
             api.prevent_close();
         }
-    } else if api.is_none() {
+    } else if *allow_real_close_once {
+        *allow_real_close_once = false;
+    } else if let Some(api) = api {
+        api.prevent_close();
+        futures::executor::block_on(send_event("APP_CLOSE_REQUESTED", ()));
+    } else {
         window.close().unwrap();
     }
 }

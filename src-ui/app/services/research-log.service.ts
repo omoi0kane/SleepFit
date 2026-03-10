@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { asyncScheduler, pairwise, skip, throttleTime } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { error, info, warn } from '@tauri-apps/plugin-log';
+import { listen } from '@tauri-apps/api/event';
+import { invoke } from '@tauri-apps/api/core';
 import { AppSettingsService } from './app-settings.service';
 import { AutomationConfigService } from './automation-config.service';
 import {
@@ -33,6 +35,7 @@ export class ResearchLogService {
   private flushTimer: ReturnType<typeof setInterval> | null = null;
   private flushInProgress = false;
   private dirty = false;
+  private stopping = false;
   private lastHighFrequencyEventByKey = new Map<string, number>();
   private lastAutomationByDomain = new Map<
     ResearchDomain,
@@ -50,7 +53,7 @@ export class ResearchLogService {
     this.initialized = true;
     this.appVersion = await getVersion().catch(() => 'unknown');
     const filePath = await this.storage.init(this.sessionId);
-    this.bindStopHooks();
+    await this.bindStopHooks();
     this.bindSettingsLogging();
     this.logEvent('session_started', 'system', {
       research_log_path: filePath,
@@ -209,8 +212,8 @@ export class ResearchLogService {
     eventType: ResearchLogEvent['event_type'],
     source: ResearchEventSource,
     payload: Record<string, unknown>
-  ) {
-    if (!this.initialized) return;
+  ): ResearchLogEvent | null {
+    if (!this.initialized) return null;
     const event: ResearchLogEvent = {
       event_id: uuidv4(),
       timestamp: new Date().toISOString(),
@@ -222,6 +225,7 @@ export class ResearchLogService {
     };
     this.events.push(event);
     this.dirty = true;
+    return event;
   }
 
   private bindSettingsLogging() {
@@ -348,31 +352,60 @@ export class ResearchLogService {
     return true;
   }
 
-  private bindStopHooks() {
-    window.addEventListener('beforeunload', () => {
+  private async bindStopHooks() {
+    const stopForWindowClose = () => {
+      void this.stopSession('window_close');
+    };
+    const stopForProcessExit = () => {
       void this.stopSession('process_exit');
+    };
+
+    await listen('APP_CLOSE_REQUESTED', () => {
+      void this.stopSession('window_close', true);
     });
+    window.addEventListener('beforeunload', stopForWindowClose);
+    window.addEventListener('unload', stopForProcessExit);
   }
 
-  private async stopSession(reason: string) {
-    if (!this.initialized || this.sessionStoppedAt) return;
+  private async stopSession(reason: string, closeWindowAfterFlush = false) {
+    if (!this.initialized || this.sessionStoppedAt || this.stopping) return;
+    this.stopping = true;
+    if (this.flushTimer) {
+      clearInterval(this.flushTimer);
+      this.flushTimer = null;
+    }
+    await this.waitForPendingFlush();
     this.sessionStoppedAt = new Date().toISOString();
     this.logEvent('app_stopped', 'system', {
       reason,
     });
-    this.logEvent('session_stopped', 'system', {
+    const sessionStoppedEvent = this.logEvent('session_stopped', 'system', {
       event_count: this.events.length,
-      flush_success: true,
+      flush_success: false,
     });
-    await this.flush(true).catch(async (e) => {
+    try {
+      const flushed = await this.flush(true);
+      if (flushed && sessionStoppedEvent) {
+        sessionStoppedEvent.payload['flush_success'] = true;
+        this.dirty = true;
+        await this.flush(true);
+      }
+      if (closeWindowAfterFlush) {
+        await invoke('complete_app_close');
+      }
+    } catch (e) {
       await error('[ResearchLog] Final flush failed: ' + e);
-    });
-    if (this.flushTimer) clearInterval(this.flushTimer);
+    } finally {
+      this.stopping = false;
+    }
   }
 
-  private async flush(force = false) {
-    if (this.flushInProgress) return;
-    if (!this.dirty && !force) return;
+  private async flush(force = false): Promise<boolean> {
+    if (this.flushInProgress) {
+      if (!force) return false;
+      await this.waitForPendingFlush();
+    }
+    if (!this.dirty && !force) return false;
     this.flushInProgress = true;
     try {
       const sessionFile: ResearchSessionFile = {
@@ -387,6 +420,7 @@ export class ResearchLogService {
       await this.storage.writeSession(sessionFile);
       this.dirty = false;
       await info(`[ResearchLog] Flushed ${this.events.length} event(s)`);
+      return true;
     } catch (e) {
       await warn('[ResearchLog] Flush failed: ' + e);
       this.logEvent('error', 'service', {
@@ -395,8 +429,15 @@ export class ResearchLogService {
         message: `${e}`,
         recoverable: true,
       });
+      return false;
     } finally {
       this.flushInProgress = false;
+    }
+  }
+
+  private async waitForPendingFlush() {
+    while (this.flushInProgress) {
+      await new Promise((resolve) => setTimeout(resolve, 25));
     }
   }
 }

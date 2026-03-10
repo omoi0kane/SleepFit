@@ -394,6 +394,7 @@ fn configure_command_handlers() -> impl Fn(tauri::ipc::Invoke) -> bool {
         overlay_sidecar::commands::overlay_sidecar_get_grpc_web_port,
         overlay_sidecar::commands::overlay_sidecar_get_grpc_port,
         system_tray::commands::set_close_to_system_tray,
+        system_tray::commands::complete_app_close,
         vrc_log_parser::commands::init_vrc_log_watcher,
         discord::commands::discord_update_activity,
         discord::commands::discord_clear_activity,
