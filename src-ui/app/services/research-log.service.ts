@@ -21,6 +21,14 @@ const RESEARCH_LOG_SCHEMA_VERSION = 1;
 const AUTOMATION_MEMORY_WINDOW_MS = 60_000;
 const FLUSH_INTERVAL_MS = 5_000;
 const HIGH_FREQUENCY_EVENT_WINDOW_MS = 1_000;
+const MANUAL_EVENT_DEBOUNCE_MS = 400;
+
+type PendingManualEvent = {
+  eventType: ResearchLogEvent['event_type'];
+  source: ResearchEventSource;
+  payload: Record<string, unknown>;
+  onRecorded?: () => void;
+};
 
 @Injectable({
   providedIn: 'root',
@@ -37,6 +45,8 @@ export class ResearchLogService {
   private dirty = false;
   private stopping = false;
   private lastHighFrequencyEventByKey = new Map<string, number>();
+  private pendingManualEvents = new Map<string, PendingManualEvent>();
+  private pendingManualEventTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private lastAutomationByDomain = new Map<
     ResearchDomain,
     { automationId: string; reason?: string | null; timestamp: number }
@@ -106,11 +116,22 @@ export class ResearchLogService {
       source_detail?: string;
     }
   ) {
-    if (!this.shouldRecordHighFrequency(`brightness:${brightnessType}:${source}`)) return;
-    this.logEvent('brightness_changed', source, {
+    const eventPayload = {
       brightness_type: brightnessType,
       ...payload,
-    });
+    };
+    if (source.startsWith('user_')) {
+      this.queueManualEvent(
+        `brightness:${brightnessType}:${source}`,
+        'brightness_changed',
+        source,
+        eventPayload,
+        () => this.logPotentialManualIntervention('brightness', source, 'brightness_changed')
+      );
+      return;
+    }
+    if (!this.shouldRecordHighFrequency(`brightness:${brightnessType}:${source}`)) return;
+    this.logEvent('brightness_changed', source, eventPayload);
     if (source === 'automation' && payload.reason) {
       this.rememberAutomation('brightness', 'BRIGHTNESS_AUTOMATIONS', payload.reason);
     }
@@ -127,6 +148,21 @@ export class ResearchLogService {
       source_detail?: string;
     }
   ) {
+    if (source.startsWith('user_')) {
+      this.queueManualEvent(
+        `cct:${source}`,
+        'color_temperature_changed',
+        source,
+        payload,
+        () =>
+          this.logPotentialManualIntervention(
+            'color_temperature',
+            source,
+            'color_temperature_changed'
+          )
+      );
+      return;
+    }
     if (!this.shouldRecordHighFrequency(`cct:${source}`)) return;
     this.logEvent('color_temperature_changed', source, payload);
     if (source === 'automation' && payload.reason) {
@@ -151,6 +187,16 @@ export class ResearchLogService {
       source_detail?: string;
     }
   ) {
+    if (source.startsWith('user_')) {
+      this.queueManualEvent(
+        `volume:${payload.device_id}:${source}`,
+        'volume_changed',
+        source,
+        payload,
+        () => this.logPotentialManualIntervention('volume', source, 'volume_changed')
+      );
+      return;
+    }
     if (!this.shouldRecordHighFrequency(`volume:${payload.device_id}:${source}`)) return;
     this.logEvent('volume_changed', source, payload);
     if (source === 'automation') {
@@ -349,6 +395,34 @@ export class ResearchLogService {
     return true;
   }
 
+  private queueManualEvent(
+    key: string,
+    eventType: ResearchLogEvent['event_type'],
+    source: ResearchEventSource,
+    payload: Record<string, unknown>,
+    onRecorded?: () => void
+  ) {
+    const existingTimer = this.pendingManualEventTimers.get(key);
+    if (existingTimer) clearTimeout(existingTimer);
+    this.pendingManualEvents.set(key, {
+      eventType,
+      source,
+      payload,
+      onRecorded,
+    });
+    this.pendingManualEventTimers.set(
+      key,
+      setTimeout(() => {
+        const event = this.pendingManualEvents.get(key);
+        if (!event) return;
+        this.logEvent(event.eventType, event.source, event.payload);
+        event.onRecorded?.();
+        this.pendingManualEvents.delete(key);
+        this.pendingManualEventTimers.delete(key);
+      }, MANUAL_EVENT_DEBOUNCE_MS)
+    );
+  }
+
   private async bindStopHooks() {
     const stopForWindowClose = () => {
       void this.stopSession('window_close');
@@ -371,6 +445,7 @@ export class ResearchLogService {
       clearInterval(this.flushTimer);
       this.flushTimer = null;
     }
+    this.flushPendingManualEvents();
     await this.waitForPendingFlush();
     this.sessionStoppedAt = new Date().toISOString();
     this.logEvent('app_stopped', 'system', {
@@ -436,5 +511,17 @@ export class ResearchLogService {
     while (this.flushInProgress) {
       await new Promise((resolve) => setTimeout(resolve, 25));
     }
+  }
+
+  private flushPendingManualEvents() {
+    for (const timer of this.pendingManualEventTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.pendingManualEventTimers.clear();
+    for (const event of this.pendingManualEvents.values()) {
+      this.logEvent(event.eventType, event.source, event.payload);
+      event.onRecorded?.();
+    }
+    this.pendingManualEvents.clear();
   }
 }

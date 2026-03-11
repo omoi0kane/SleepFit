@@ -130,20 +130,22 @@ export class CCTControlService {
     const opt = { ...SET_BRIGHTNESS_OR_CCT_OPTIONS_DEFAULTS, ...(options ?? {}) };
     cct = clamp(Math.round(cct), 1000, 10000);
     if (opt.cancelActiveTransition) this.cancelActiveTransition();
-    if (cct === this.cct && !force) return;
     const oldCct = this.cct;
+    if (cct === oldCct && !force) return;
     this._cct.next(cct);
     if (this.hardwareReady) invoke('openvr_set_analog_color_temp', { temperature: cct });
-    this.researchLog.logColorTemperatureChanged(
-      opt.logReason ? 'automation' : ((opt.researchSource as any) ?? 'unknown'),
-      {
-        old_value: oldCct,
-        new_value: cct,
-        reason: opt.logReason,
-        transition: false,
-        source_detail: opt.researchSource ?? undefined,
-      }
-    );
+    if (oldCct !== cct) {
+      this.researchLog.logColorTemperatureChanged(
+        opt.logReason ? 'automation' : ((opt.researchSource as any) ?? 'unknown'),
+        {
+          old_value: oldCct,
+          new_value: cct,
+          reason: opt.logReason,
+          transition: false,
+          source_detail: opt.researchSource ?? undefined,
+        }
+      );
+    }
     if (opt.logReason) {
       await info(`[CCTControl] Set CCT to ${cct}K (Reason: ${opt.logReason})`);
     }
