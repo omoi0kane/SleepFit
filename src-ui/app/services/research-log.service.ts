@@ -132,9 +132,6 @@ export class ResearchLogService {
     }
     if (!this.shouldRecordHighFrequency(`brightness:${brightnessType}:${source}`)) return;
     this.logEvent('brightness_changed', source, eventPayload);
-    if (source === 'automation' && payload.reason) {
-      this.rememberAutomation('brightness', 'BRIGHTNESS_AUTOMATIONS', payload.reason);
-    }
     this.logPotentialManualIntervention('brightness', source, 'brightness_changed');
   }
 
@@ -165,9 +162,6 @@ export class ResearchLogService {
     }
     if (!this.shouldRecordHighFrequency(`cct:${source}`)) return;
     this.logEvent('color_temperature_changed', source, payload);
-    if (source === 'automation' && payload.reason) {
-      this.rememberAutomation('color_temperature', 'BRIGHTNESS_AUTOMATIONS', payload.reason);
-    }
     this.logPotentialManualIntervention(
       'color_temperature',
       source,
@@ -217,6 +211,7 @@ export class ResearchLogService {
       target?: string;
     }
   ) {
+    this.rememberAutomationDomainsFromFiredEvent(automationId, payload);
     this.logEvent('automation_fired', 'automation', {
       automation_id: automationId,
       ...payload,
@@ -368,6 +363,36 @@ export class ResearchLogService {
       reason: reason ?? null,
       timestamp: Date.now(),
     });
+  }
+
+  private rememberAutomationDomainsFromFiredEvent(
+    automationId: string,
+    payload: {
+      reason?: string;
+      target?: string;
+    }
+  ) {
+    const domains = this.resolveAutomationDomains(automationId, payload.target);
+    for (const domain of domains) {
+      this.rememberAutomation(domain, automationId, payload.reason);
+    }
+  }
+
+  private resolveAutomationDomains(
+    automationId: string,
+    target?: string
+  ): ResearchDomain[] {
+    if (automationId === 'BRIGHTNESS_AUTOMATIONS') {
+      if (target === 'brightness') return ['brightness'];
+      if (target === 'cct') return ['color_temperature'];
+      if (target === 'brightness_and_cct') return ['brightness', 'color_temperature'];
+    }
+
+    if (automationId === 'AUDIO_DEVICE_AUTOMATIONS' && target === 'SET_VOLUME') {
+      return ['volume'];
+    }
+
+    return [];
   }
 
   private logPotentialManualIntervention(
