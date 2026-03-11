@@ -1,3 +1,5 @@
+import { ResearchEventSource } from '../../models/research-log';
+
 export type SetBrightnessOrCCTReason =
   | 'SLEEP_MODE_ENABLE'
   | 'SLEEP_MODE_DISABLE'
@@ -9,7 +11,7 @@ export type SetBrightnessOrCCTReason =
 export interface SetBrightnessOrCCTOptions {
   cancelActiveTransition: boolean;
   logReason: SetBrightnessOrCCTReason | null;
-  researchSource?: string | null;
+  researchSource?: ResearchEventSource | null;
 }
 
 export const SET_BRIGHTNESS_OR_CCT_OPTIONS_DEFAULTS: SetBrightnessOrCCTOptions = {

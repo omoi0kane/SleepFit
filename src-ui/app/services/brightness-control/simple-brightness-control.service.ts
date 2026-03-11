@@ -108,7 +108,10 @@ export class SimpleBrightnessControlService {
       async () => [0, 100],
       percentage,
       duration,
-      { logReason: opt.logReason }
+      {
+        logReason: opt.logReason,
+        researchSource: opt.logReason ? 'automation' : (opt.researchSource ?? null),
+      }
     );
     transition.onComplete.subscribe(() => {
       if (transition.isComplete() && this._activeTransition.value === transition)

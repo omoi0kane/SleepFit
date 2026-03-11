@@ -20,7 +20,7 @@ import { isEqual } from 'lodash';
 const RESEARCH_LOG_SCHEMA_VERSION = 1;
 const AUTOMATION_MEMORY_WINDOW_MS = 60_000;
 const FLUSH_INTERVAL_MS = 5_000;
-const HIGH_FREQUENCY_EVENT_WINDOW_MS = 250;
+const HIGH_FREQUENCY_EVENT_WINDOW_MS = 1_000;
 
 @Injectable({
   providedIn: 'root',
@@ -106,8 +106,7 @@ export class ResearchLogService {
       source_detail?: string;
     }
   ) {
-    if (!this.shouldRecordHighFrequency(`brightness:${brightnessType}:${source}`, payload.new_value))
-      return;
+    if (!this.shouldRecordHighFrequency(`brightness:${brightnessType}:${source}`)) return;
     this.logEvent('brightness_changed', source, {
       brightness_type: brightnessType,
       ...payload,
@@ -128,7 +127,7 @@ export class ResearchLogService {
       source_detail?: string;
     }
   ) {
-    if (!this.shouldRecordHighFrequency(`cct:${source}`, payload.new_value)) return;
+    if (!this.shouldRecordHighFrequency(`cct:${source}`)) return;
     this.logEvent('color_temperature_changed', source, payload);
     if (source === 'automation' && payload.reason) {
       this.rememberAutomation('color_temperature', 'BRIGHTNESS_AUTOMATIONS', payload.reason);
@@ -152,8 +151,7 @@ export class ResearchLogService {
       source_detail?: string;
     }
   ) {
-    if (!this.shouldRecordHighFrequency(`volume:${payload.device_id}:${source}`, payload.new_value))
-      return;
+    if (!this.shouldRecordHighFrequency(`volume:${payload.device_id}:${source}`)) return;
     this.logEvent('volume_changed', source, payload);
     if (source === 'automation') {
       this.rememberAutomation('volume', 'AUDIO_DEVICE_AUTOMATIONS', payload.reason);
@@ -343,12 +341,11 @@ export class ResearchLogService {
     });
   }
 
-  private shouldRecordHighFrequency(key: string, value: number) {
+  private shouldRecordHighFrequency(key: string) {
     const now = Date.now();
-    const eventKey = `${key}:${value}`;
-    const last = this.lastHighFrequencyEventByKey.get(eventKey) ?? 0;
+    const last = this.lastHighFrequencyEventByKey.get(key) ?? 0;
     if (now - last < HIGH_FREQUENCY_EVENT_WINDOW_MS) return false;
-    this.lastHighFrequencyEventByKey.set(eventKey, now);
+    this.lastHighFrequencyEventByKey.set(key, now);
     return true;
   }
 

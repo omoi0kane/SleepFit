@@ -128,7 +128,10 @@ export class HardwareBrightnessControlService {
       () => firstValueFrom(this.brightnessBounds),
       percentage,
       duration,
-      { logReason: opt.logReason }
+      {
+        logReason: opt.logReason,
+        researchSource: opt.logReason ? 'automation' : (opt.researchSource ?? null),
+      }
     );
     transition.onComplete.subscribe(() => {
       if (transition.isComplete() && this._activeTransition.value === transition)

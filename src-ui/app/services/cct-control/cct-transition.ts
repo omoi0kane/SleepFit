@@ -5,15 +5,18 @@ import {
   SetBrightnessOrCCTOptions,
   SetBrightnessOrCCTReason,
 } from '../brightness-control/brightness-control-models';
+import { ResearchEventSource } from '../../models/research-log';
 
 interface CCTTransitionTaskOptions {
   frequency: number;
   logReason: SetBrightnessOrCCTReason | null;
+  researchSource: ResearchEventSource | null;
 }
 
 const DEFAULT_CCT_TRANSITION_TASK_OPTIONS: CCTTransitionTaskOptions = {
   frequency: 60,
   logReason: null,
+  researchSource: null,
 };
 
 export class CCTTransitionTask extends CancellableTask {
@@ -65,12 +68,14 @@ export class CCTTransitionTask extends CancellableTask {
       await this.setCCT(cct, {
         cancelActiveTransition: false,
         logReason: undefined,
+        researchSource: this.options.researchSource,
       });
     }
     // Set the final target cct
     await this.setCCT(this.targetCCT, {
       cancelActiveTransition: false,
       logReason: undefined,
+      researchSource: this.options.researchSource,
     });
     if (this.options.logReason) {
       await info(

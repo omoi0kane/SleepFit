@@ -470,6 +470,7 @@ export class BrightnessCctAutomationService {
       if (!forceInstant && config.transition) {
         const task = this.cctControl.transitionCCT(config.colorTemperature, config.transitionTime, {
           logReason,
+          researchSource: 'automation',
         });
         this.lastActivatedCCTTransition.next({
           tasks: [task],
@@ -507,6 +508,7 @@ export class BrightnessCctAutomationService {
                 config.transitionTime,
                 {
                   logReason,
+                  researchSource: 'automation',
                 }
               ),
             ];
@@ -517,6 +519,7 @@ export class BrightnessCctAutomationService {
                   config.transitionTime,
                   {
                     logReason,
+                    researchSource: 'automation',
                   }
                 )
               );
@@ -529,6 +532,7 @@ export class BrightnessCctAutomationService {
                 config.transitionTime,
                 {
                   logReason,
+                  researchSource: 'automation',
                 }
               ),
             ];
@@ -542,15 +546,18 @@ export class BrightnessCctAutomationService {
         if (advancedMode) {
           await this.softwareBrightnessControl.setBrightness(config.softwareBrightness, {
             logReason,
+            researchSource: 'automation',
           });
           if (await firstValueFrom(this.hardwareBrightnessControl.driverIsAvailable)) {
             await this.hardwareBrightnessControl.setBrightness(config.hardwareBrightness, {
               logReason,
+              researchSource: 'automation',
             });
           }
         } else {
           await this.simpleBrightnessControl.setBrightness(config.brightness, {
             logReason,
+            researchSource: 'automation',
           });
         }
       }

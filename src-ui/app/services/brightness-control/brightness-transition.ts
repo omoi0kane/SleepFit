@@ -2,15 +2,18 @@ import { CancellableTask } from '../../utils/cancellable-task';
 import { clamp, smoothLerp } from '../../utils/number-utils';
 import { info, warn } from '@tauri-apps/plugin-log';
 import { SetBrightnessOrCCTOptions, SetBrightnessOrCCTReason } from './brightness-control-models';
+import { ResearchEventSource } from '../../models/research-log';
 
 interface BrightnessTransitionTaskOptions {
   frequency: number;
   logReason: SetBrightnessOrCCTReason | null;
+  researchSource: ResearchEventSource | null;
 }
 
 const DEFAULT_BRIGHTNESS_TRANSITION_TASK_OPTIONS: BrightnessTransitionTaskOptions = {
   frequency: 60,
   logReason: null,
+  researchSource: null,
 };
 
 export class BrightnessTransitionTask extends CancellableTask {
@@ -65,12 +68,14 @@ export class BrightnessTransitionTask extends CancellableTask {
       await this.setBrightness(brightness, {
         cancelActiveTransition: false,
         logReason: undefined,
+        researchSource: this.options.researchSource,
       });
     }
     // Set the final target brightness
     await this.setBrightness(this.targetBrightness, {
       cancelActiveTransition: false,
       logReason: undefined,
+      researchSource: this.options.researchSource,
     });
     if (this.options.logReason) {
       await info(

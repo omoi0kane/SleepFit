@@ -93,7 +93,10 @@ export class CCTControlService {
       async () => this.cct,
       temperature,
       duration,
-      { logReason: opt.logReason }
+      {
+        logReason: opt.logReason,
+        researchSource: opt.logReason ? 'automation' : (opt.researchSource ?? null),
+      }
     );
     transition.onComplete.subscribe(() => {
       if (transition.isComplete() && this._activeTransition.value === transition)
