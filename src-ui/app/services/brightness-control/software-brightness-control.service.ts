@@ -78,6 +78,7 @@ export class SoftwareBrightnessControlService {
       {
         logReason: opt.logReason,
         researchSource: opt.logReason ? 'automation' : (opt.researchSource ?? null),
+        logResearchEvent: opt.logResearchEvent,
       }
     );
     transition.onComplete.subscribe(() => {
@@ -115,17 +116,19 @@ export class SoftwareBrightnessControlService {
     const oldBrightness = this.brightness;
     this._brightness.next(percentage);
     await this.setSoftwareBrightness(percentage);
-    this.researchLog.logBrightnessChanged(
-      'software',
-      opt.logReason ? 'automation' : ((opt.researchSource as any) ?? 'unknown'),
-      {
-        old_value: oldBrightness,
-        new_value: percentage,
-        reason: opt.logReason,
-        transition: false,
-        source_detail: opt.researchSource ?? undefined,
-      }
-    );
+    if (opt.logResearchEvent) {
+      this.researchLog.logBrightnessChanged(
+        'software',
+        opt.logReason ? 'automation' : ((opt.researchSource as any) ?? 'unknown'),
+        {
+          old_value: oldBrightness,
+          new_value: percentage,
+          reason: opt.logReason,
+          transition: false,
+          source_detail: opt.researchSource ?? undefined,
+        }
+      );
+    }
     if (opt.logReason) {
       await info(
         `[BrightnessControl] Set software brightness to ${percentage}% (Reason: ${opt.logReason})`

@@ -8,12 +8,14 @@ interface BrightnessTransitionTaskOptions {
   frequency: number;
   logReason: SetBrightnessOrCCTReason | null;
   researchSource: ResearchEventSource | null;
+  logResearchEvent: boolean;
 }
 
 const DEFAULT_BRIGHTNESS_TRANSITION_TASK_OPTIONS: BrightnessTransitionTaskOptions = {
   frequency: 60,
   logReason: null,
   researchSource: null,
+  logResearchEvent: true,
 };
 
 export class BrightnessTransitionTask extends CancellableTask {
@@ -69,6 +71,7 @@ export class BrightnessTransitionTask extends CancellableTask {
         cancelActiveTransition: false,
         logReason: undefined,
         researchSource: this.options.researchSource,
+        logResearchEvent: this.options.logResearchEvent,
       });
     }
     // Set the final target brightness
@@ -76,6 +79,7 @@ export class BrightnessTransitionTask extends CancellableTask {
       cancelActiveTransition: false,
       logReason: undefined,
       researchSource: this.options.researchSource,
+      logResearchEvent: this.options.logResearchEvent,
     });
     if (this.options.logReason) {
       await info(

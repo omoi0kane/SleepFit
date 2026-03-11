@@ -131,6 +131,7 @@ export class HardwareBrightnessControlService {
       {
         logReason: opt.logReason,
         researchSource: opt.logReason ? 'automation' : (opt.researchSource ?? null),
+        logResearchEvent: opt.logResearchEvent,
       }
     );
     transition.onComplete.subscribe(() => {
@@ -171,17 +172,19 @@ export class HardwareBrightnessControlService {
     const oldBrightness = this.brightness;
     this._brightness.next(percentage);
     await driver.setBrightnessPercentage(percentage);
-    this.researchLog.logBrightnessChanged(
-      'hardware',
-      opt.logReason ? 'automation' : ((opt.researchSource as any) ?? 'unknown'),
-      {
-        old_value: oldBrightness,
-        new_value: percentage,
-        reason: opt.logReason,
-        transition: false,
-        source_detail: opt.researchSource ?? undefined,
-      }
-    );
+    if (opt.logResearchEvent) {
+      this.researchLog.logBrightnessChanged(
+        'hardware',
+        opt.logReason ? 'automation' : ((opt.researchSource as any) ?? 'unknown'),
+        {
+          old_value: oldBrightness,
+          new_value: percentage,
+          reason: opt.logReason,
+          transition: false,
+          source_detail: opt.researchSource ?? undefined,
+        }
+      );
+    }
     if (opt.logReason) {
       await info(
         `[BrightnessControl] Set hardware brightness to ${percentage}% (Reason: ${opt.logReason})`

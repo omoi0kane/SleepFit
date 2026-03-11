@@ -12,10 +12,12 @@ export interface SetBrightnessOrCCTOptions {
   cancelActiveTransition: boolean;
   logReason: SetBrightnessOrCCTReason | null;
   researchSource?: ResearchEventSource | null;
+  logResearchEvent: boolean;
 }
 
 export const SET_BRIGHTNESS_OR_CCT_OPTIONS_DEFAULTS: SetBrightnessOrCCTOptions = {
   cancelActiveTransition: true,
   logReason: null,
   researchSource: null,
+  logResearchEvent: true,
 };

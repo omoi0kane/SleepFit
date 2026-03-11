@@ -111,6 +111,7 @@ export class SimpleBrightnessControlService {
       {
         logReason: opt.logReason,
         researchSource: opt.logReason ? 'automation' : (opt.researchSource ?? null),
+        logResearchEvent: opt.logResearchEvent,
       }
     );
     transition.onComplete.subscribe(() => {
@@ -177,24 +178,28 @@ export class SimpleBrightnessControlService {
       cancelActiveTransition: true,
       logReason: null,
       researchSource: opt.researchSource,
+      logResearchEvent: false,
     });
     if (this.hardwareBrightnessDriverAvailable) {
       await this.hardwareBrightnessControl.setBrightness(hardwareBrightness, {
         cancelActiveTransition: true,
         logReason: null,
         researchSource: opt.researchSource,
+        logResearchEvent: false,
       });
     }
-    this.researchLog.logBrightnessChanged(
-      'simple',
-      opt.logReason ? 'automation' : ((opt.researchSource as any) ?? 'unknown'),
-      {
-        old_value: oldBrightness,
-        new_value: percentage,
-        reason: opt.logReason,
-        transition: false,
-        source_detail: opt.researchSource ?? undefined,
-      }
-    );
+    if (opt.logResearchEvent && oldBrightness !== percentage) {
+      this.researchLog.logBrightnessChanged(
+        'simple',
+        opt.logReason ? 'automation' : ((opt.researchSource as any) ?? 'unknown'),
+        {
+          old_value: oldBrightness,
+          new_value: percentage,
+          reason: opt.logReason,
+          transition: false,
+          source_detail: opt.researchSource ?? undefined,
+        }
+      );
+    }
   }
 }
