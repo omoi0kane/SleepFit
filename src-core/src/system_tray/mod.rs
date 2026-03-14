@@ -34,7 +34,7 @@ pub async fn init() {
     // Listen to system tray events
     let app_guard = TAURI_APP_HANDLE.lock().await;
     let app = app_guard.as_ref().unwrap();
-    let tray = app.tray_by_id("oyasumivr-tray").unwrap();
+    let tray = app.tray_by_id("sleepfit-tray").unwrap();
     tray.on_tray_icon_event(|icon, event| {
         futures::executor::block_on(on_tray_icon_event(icon, event))
     });
