@@ -45,7 +45,7 @@ export class SettingsStatusInfoViewComponent {
   ) {
     this.categories = [
       {
-        name: 'OyasumiVR Application',
+        name: 'SleepFit Application',
         entries: [
           { key: 'Version', value: from(getVersion().then((v) => v + '-' + FLAVOUR)) },
           { key: 'Build ID', value: of(BUILD_ID) },

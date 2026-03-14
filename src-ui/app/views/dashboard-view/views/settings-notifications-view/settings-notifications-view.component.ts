@@ -25,7 +25,7 @@ export class SettingsNotificationsViewComponent implements OnInit {
   protected providerOptions: SelectBoxItem[] = [
     {
       id: 'OYASUMIVR',
-      label: 'OyasumiVR',
+      label: 'SleepFit',
     },
     {
       id: 'XSOVERLAY',

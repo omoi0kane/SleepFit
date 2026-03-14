@@ -734,7 +734,7 @@ export class AppModule {
             ),
             // Power automations
             this.logInit(
-              'Initializing device power automations (SteamVR/OyasumiVR)',
+              'Initializing device power automations (SteamVR/SleepFit)',
               this.oyasumivrSteamvrDevicePowerAutomationsService.init()
             ),
             this.logInit(
@@ -850,17 +850,17 @@ export class AppModule {
       if (
         await ask(
           [
-            'OyasumiVR could not completely initialize, and therefore failed to start.',
+            'SleepFit could not completely initialize, and therefore failed to start.',
             '',
             'This is a bug that should be reported to the developer. Please join our Discord to ask for support, or contact Raphiiko on Twitter/X (@Raphiiko).',
             '',
             'Do you want to join the Discord server to ask for help right now?',
           ].join('\n'),
           {
-            title: 'OyasumiVR failed to start',
+            title: 'SleepFit failed to start',
             kind: 'error',
             okLabel: 'Join the Discord for support',
-            cancelLabel: 'Quit OyasumiVR',
+            cancelLabel: 'Quit SleepFit',
           }
         )
       ) {
@@ -961,7 +961,7 @@ export class AppModule {
       !(await invoke('is_elevation_security_disabled'))
     ) {
       const result = await ask(
-        'OyasumiVR was launched with administrative permissions. For security reasons, OyasumiVR does not support running with administrative permissions.\n\nPlease restart OyasumiVR without administrative permissions in order to proceed.',
+        'SleepFit was launched with administrative permissions. For security reasons, SleepFit does not support running with administrative permissions.\n\nPlease restart SleepFit without administrative permissions in order to proceed.',
         {
           title: 'Administrative permissions detected',
           kind: 'error',
