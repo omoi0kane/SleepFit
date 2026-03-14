@@ -8,6 +8,8 @@ import { FLAVOUR } from '../../build';
 import { info } from '@tauri-apps/plugin-log';
 import { check, Update } from '@tauri-apps/plugin-updater';
 
+const UPDATES_ENABLED = false;
+
 @Injectable({
   providedIn: 'root',
 })
@@ -20,6 +22,13 @@ export class UpdateService {
   constructor(private modalService: ModalService) {}
 
   async init() {
+    if (!UPDATES_ENABLED) {
+      this._updateAvailable.next({
+        checked: true,
+      });
+      info('[Update] Update checks are disabled for this build.');
+      return;
+    }
     if (FLAVOUR === 'STANDALONE') {
       // Check for updates on start
       await this.checkForUpdate(true);
@@ -36,6 +45,12 @@ export class UpdateService {
   }
 
   async checkForUpdate(showDialog = false) {
+    if (!UPDATES_ENABLED) {
+      this._updateAvailable.next({
+        checked: true,
+      });
+      return;
+    }
     // Only ever check for updates in the STANDALONE flavour
     if (FLAVOUR !== 'STANDALONE') {
       this._updateAvailable.next({
@@ -71,6 +86,7 @@ export class UpdateService {
   }
 
   async installUpdate() {
+    if (!UPDATES_ENABLED) return;
     const update = this._updateAvailable.value?.update;
     if (!update) return;
     info(`[Update] Installing update...`);

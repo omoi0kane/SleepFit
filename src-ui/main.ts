@@ -17,7 +17,7 @@ if (isDevMode()) {
 }
 
 getVersion().then((version) => {
-  info('[Oyasumi] Starting OyasumiVR v' + version + '-' + FLAVOUR);
+  info('[SleepFit] Starting SleepFit v' + version + '-' + FLAVOUR);
 });
 
 disableDefaultContextMenu();

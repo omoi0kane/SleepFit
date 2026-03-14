@@ -244,7 +244,7 @@ export class SettingsAdvancedViewComponent {
   }
 
   async openLogsFolder() {
-    const path = await appLogDir().then((dir) => dir + '\\OyasumiVR.log');
+    const path = await appLogDir().then((dir) => dir + '\\SleepFit.log');
     await invoke('show_in_folder', { path });
   }
 

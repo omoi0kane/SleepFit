@@ -35,7 +35,7 @@ export class SystemTrayService {
   ) {}
 
   public async init() {
-    const tray = await TrayIcon.getById('oyasumivr-tray');
+    const tray = await TrayIcon.getById('sleepfit-tray');
     if (!tray) {
       error('[SystemTrayService] Tray icon not found');
       throw new Error('Tray icon not found');
@@ -72,7 +72,7 @@ export class SystemTrayService {
     return Menu.new({
       items: [
         {
-          text: `OyasumiVR v${await getVersion()} (${BUILD_ID})`,
+          text: `SleepFit v${await getVersion()} (${BUILD_ID})`,
           enabled: false,
         },
         {

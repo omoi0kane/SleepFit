@@ -81,11 +81,11 @@ export class NotificationService {
         case 'OYASUMIVR':
           return await this.sendOyasumiNotification(content, duration);
         case 'XSOVERLAY':
-          return await this.sendXSOverlayNotification('OyasumiVR', content, false, duration);
+          return await this.sendXSOverlayNotification('SleepFit', content, false, duration);
         case 'DESKTOP':
-          return await this.sendDesktopNotification('OyasumiVR', content);
+          return await this.sendDesktopNotification('SleepFit', content);
         case 'OVRTOOLKIT':
-          return await this.sendOVRToolkitNotification('OyasumiVR', content);
+          return await this.sendOVRToolkitNotification('SleepFit', content);
       }
     } catch (e) {
       warn('[Notification] Failed to send notification: ' + e);
@@ -211,7 +211,7 @@ export class NotificationService {
       height: 175,
       opacity: 0,
       useBase64Icon: true,
-      sourceApp: 'OyasumiVR/' + (await getVersion()),
+      sourceApp: 'SleepFit/' + (await getVersion()),
     };
     await invoke('xsoverlay_send_message', {
       message: Array.from(new TextEncoder().encode(JSON.stringify(message))),

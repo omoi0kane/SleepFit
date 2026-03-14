@@ -50,7 +50,6 @@
       ]
     },
     "notification:default",
-    "updater:default",
     "global-shortcut:default",
     "global-shortcut:allow-is-registered",
     "global-shortcut:allow-register",

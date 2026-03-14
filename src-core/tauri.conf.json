@@ -56,7 +56,7 @@
       "providerShortName": null,
       "signingIdentity": null
     },
-    "shortDescription": "OyasumiVR",
+    "shortDescription": "Sleep Fit",
     "linux": {
       "deb": {
         "depends": []
@@ -65,22 +65,22 @@
     "licenseFile": "../LICENSE.md",
     "createUpdaterArtifacts": "v1Compatible"
   },
-  "productName": "OyasumiVR",
-  "mainBinaryName": "OyasumiVR",
+  "productName": "SleepFit",
+  "mainBinaryName": "SleepFit",
   "version": "25.6.12",
-  "identifier": "co.raphii.oyasumi",
+  "identifier": "com.fleabane.sleepfit",
   "plugins": {
     "cli": {
-      "description": "OyasumiVR - VR Sleep Utilities",
+      "description": "SleepFit - Sleep wellness application",
       "args": [
         {
           "name": "dont-need-security-where-im-going-uwu",
           "description": "Permanently enables the main process to run with administrative privileges",
-          "longDescription": "WARNING: Enabling this has significant security risks!\n\nLaunching OyasumiVR with this flag will allow OyasumiVR to be ran as administrator from then on. Requires OyasumiVR.exe to be run with administrative privileges. This action can be undone by running the application again with the --reset-elevation-security flag.\n\nMore information can be found at https://raphii.co/oyasumivr/hidden/troubleshooting/launch-as-admin"
+          "longDescription": "WARNING: Enabling this has significant security risks!\n\nLaunching SleepFit with this flag will allow SleepFit to be ran as administrator from then on. Requires SleepFit.exe to be run with administrative privileges. This action can be undone by running the application again with the --reset-elevation-security flag.\n\nMore information can be found at https://raphii.co/oyasumivr/hidden/troubleshooting/launch-as-admin"
         },
         {
           "name": "reset-elevation-security",
-          "description": "Restores the default elevation security settings. Requires OyasumiVR.exe to be ran with administrative privileges."
+          "description": "Restores the default elevation security settings. Requires SleepFit.exe to be run with administrative privileges."
         },
         {
           "name": "core-mode",
@@ -111,15 +111,9 @@
     "deep-link": {
       "desktop": {
         "schemes": [
-          "oyasumivr"
+          "sleepfit"
         ]
       }
-    },
-    "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVGOEI4QTQ2Rjk1NEMwNTUKUldSVndGVDVSb3FMN3hIanNsbVVDdVk1MkE2MVpVWERJeTdUVVRzZ1JpanVQTmNXYWJGVHhUSVIK",
-      "endpoints": [
-        "https://gist.githubusercontent.com/Raphiiko/16ed38d8ccd9282675d04478f887f76f/raw"
-      ]
     }
   },
   "app": {
@@ -139,7 +133,7 @@
         "skipTaskbar": true,
         "minimizable": false,
         "focus": true,
-        "userAgent": "OyasumiVR/25.6.12 (https://github.com/Raphiiko/OyasumiVR)",
+        "userAgent": "SleepFit/25.6.12 (https://github.com/Raphiiko/OyasumiVR)",
         "useHttpsScheme": false
       },
       {
@@ -147,7 +141,7 @@
         "height": 620,
         "decorations": false,
         "resizable": true,
-        "title": "OyasumiVR",
+        "title": "SleepFit",
         "width": 980,
         "minWidth": 980,
         "minHeight": 662,
@@ -155,7 +149,7 @@
         "theme": "Dark",
         "visible": false,
         "transparent": true,
-        "userAgent": "OyasumiVR/25.6.12 (https://github.com/Raphiiko/OyasumiVR)",
+        "userAgent": "SleepFit/25.6.12 (https://github.com/Raphiiko/OyasumiVR)",
         "useHttpsScheme": false
       }
     ],
@@ -163,10 +157,10 @@
       "csp": null
     },
     "trayIcon": {
-      "id": "oyasumivr-tray",
+      "id": "sleepfit-tray",
       "iconPath": "icons/icon.ico",
       "showMenuOnLeftClick": false,
-      "tooltip": "OyasumiVR"
+      "tooltip": "SleepFit"
     }
   }
 }
