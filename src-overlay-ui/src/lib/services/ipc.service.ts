@@ -15,7 +15,7 @@ import { fontLoader } from 'src-shared-ts/src/font-loader';
 import { camelCaseToUpperSnakeCase } from '$lib/utils/string-utils';
 
 if (browser && !window.OyasumiIPCIn)
-	window.OyasumiIPCIn = Object.assign(window.OyasumiIPCIn || {}, {});
+	window.OyasumiIPCIn = {} as typeof window.OyasumiIPCIn;
 
 class IPCService {
 	initialized = false;
