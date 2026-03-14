@@ -25,14 +25,18 @@ pub async fn process_elevation_cli_args() {
 
 async fn reset_elevation_security() {
     if !is_elevated() {
-        eprintln!("In order to reset elevation security, OyasumiVR.exe must be run with administrative privileges.");
+        eprintln!(
+            "In order to reset elevation security, SleepFit.exe must be run with administrative privileges."
+        );
         std::process::exit(1);
     }
 
     // Clear the registry flag
     match clear_elevation_security_override_registry_flag() {
         Ok(_) => {
-            println!("[Core] Elevation security has been reset. OyasumiVR will no longer run with administrative privileges.");
+            println!(
+                "[Core] Elevation security has been reset. SleepFit will no longer run with administrative privileges."
+            );
         }
         Err(e) => {
             eprintln!("[Core] Failed to reset elevation security: {e}");
@@ -43,14 +47,18 @@ async fn reset_elevation_security() {
 
 async fn disable_elevation_security() {
     if !is_elevated() {
-        eprintln!("In order to disable elevation security, OyasumiVR.exe must be run with administrative privileges.");
+        eprintln!(
+            "In order to disable elevation security, SleepFit.exe must be run with administrative privileges."
+        );
         std::process::exit(1);
     }
 
     // Set the registry flag
     match set_elevation_security_override_registry_flag() {
         Ok(_) => {
-            println!("Elevation security has been disabled. You can now run OyasumiVR with administrative privileges.");
+            println!(
+                "Elevation security has been disabled. You can now run SleepFit with administrative privileges."
+            );
         }
         Err(e) => {
             eprintln!("[Core] Failed to disable elevation security: {e}");
@@ -61,7 +69,7 @@ async fn disable_elevation_security() {
 
 fn set_elevation_security_override_registry_flag() -> Result<(), std::io::Error> {
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-    let (key, _) = hklm.create_subkey("SOFTWARE\\OyasumiVR")?;
+    let (key, _) = hklm.create_subkey("SOFTWARE\\SleepFit")?;
     key.set_value("ElevationSecurityOverride", &1u32)?;
     Ok(())
 }
@@ -70,7 +78,7 @@ fn clear_elevation_security_override_registry_flag() -> Result<(), std::io::Erro
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
 
     // Try to open the key first
-    match hklm.open_subkey_with_flags("SOFTWARE\\OyasumiVR", KEY_WRITE) {
+    match hklm.open_subkey_with_flags("SOFTWARE\\SleepFit", KEY_WRITE) {
         Ok(key) => {
             // If the key exists, try to delete the value
             match key.delete_value("ElevationSecurityOverride") {
@@ -99,7 +107,7 @@ fn clear_elevation_security_override_registry_flag() -> Result<(), std::io::Erro
 pub fn is_elevation_security_disabled() -> bool {
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
 
-    match hklm.open_subkey("SOFTWARE\\OyasumiVR") {
+    match hklm.open_subkey("SOFTWARE\\SleepFit") {
         Ok(key) => match key.get_value::<u32, _>("ElevationSecurityOverride") {
             Ok(value) => value == 1,
             Err(_) => false,

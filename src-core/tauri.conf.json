@@ -62,8 +62,7 @@
         "depends": []
       }
     },
-    "licenseFile": "../LICENSE.md",
-    "createUpdaterArtifacts": "v1Compatible"
+    "licenseFile": "../LICENSE.md"
   },
   "productName": "SleepFit",
   "mainBinaryName": "SleepFit",
