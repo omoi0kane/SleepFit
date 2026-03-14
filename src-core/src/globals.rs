@@ -4,7 +4,7 @@ use tauri::AppHandle;
 use tauri_plugin_cli::Matches;
 use tokio::sync::Mutex;
 
-pub const STEAM_APP_KEY: &str = "steam.overlay.2538150-DEV";
+pub const STEAM_APP_KEY: &str = "steam.overlay.sleepfit-DEV";
 pub const CORE_GRPC_DEV_PORT: u16 = 5176;
 pub const CORE_HTTP_DEV_PORT: u16 = 5177;
 pub const OVERLAY_SIDECAR_GRPC_DEV_PORT: u16 = 5174;

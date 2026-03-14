@@ -2,15 +2,15 @@
   "source": "builtin",
   "applications": [
     {
-      "app_key": "steam.overlay.2538150-DEV",
+      "app_key": "steam.overlay.sleepfit-DEV",
       "launch_type": "binary",
-      "binary_path_windows": "..\\OyasumiVR.exe",
+      "binary_path_windows": "..\\SleepFit.exe",
       "action_manifest_path": ".\\input\\action_manifest.json",
       "is_dashboard_overlay": true,
       "strings": {
         "en_us": {
-          "name": "OyasumiVR",
-          "description": "OyasumiVR - VR Sleeping Utilities"
+          "name": "SleepFit",
+          "description": "SleepFit - Sleep wellness application"
         }
       }
     }

@@ -1,11 +1,11 @@
 [package]
-name = "oyasumivr"
+name = "sleepfit"
 version = "25.6.12"
 description = ""
 authors = ["Raphiiko"]
 license = "MIT"
 repository = "https://github.com/Raphiiko/Oyasumi"
-default-run = "oyasumivr"
+default-run = "sleepfit"
 edition = "2021"
 
 [features]

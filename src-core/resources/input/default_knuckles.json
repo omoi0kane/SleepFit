@@ -1,13 +1,13 @@
 {
   "action_manifest_version": 1,
   "controller_type": "knuckles",
-  "description": "OyasumiVR's default bindings for Valve Index controllers",
+  "description": "SleepFit's default bindings for Valve Index controllers",
   "interaction_profile": "",
-  "name": "OyasumiVR Default Bindings",
+  "name": "SleepFit Default Bindings",
   "options": {},
   "category": "steamvr_input",
   "alias_info": {},
-  "app_key": "steam.overlay.2538150-DEV",
+  "app_key": "steam.overlay.sleepfit-DEV",
   "bindings": {
     "/actions/main": {
       "sources": [

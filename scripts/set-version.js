@@ -38,7 +38,7 @@ if (version === 'DEV') version = '0.0.0';
 const tauriConfJson = JSON.parse(readFileSync('src-core/tauri.conf.json').toString());
 tauriConfJson.version = version;
 tauriConfJson.app.windows = tauriConfJson.app.windows.map((window) => {
-  window.userAgent = `OyasumiVR/${
+  window.userAgent = `SleepFit/${
     version === '0.0.0' ? 'DEV' : version
   } (https://github.com/Raphiiko/OyasumiVR)`;
   return window;
@@ -48,8 +48,8 @@ writeFileSync('src-core/tauri.conf.json', JSON.stringify(tauriConfJson, null, 2)
 // Core Cargo toml
 let tauriCargoToml = readFileSync('src-core/Cargo.toml').toString();
 tauriCargoToml = tauriCargoToml.replaceAll(
-  /\[package\]\r?\nname = "oyasumivr"\r?\nversion = "[0-9]+\.[0-9]+\.[0-9]+"/g,
-  `[package]\r\nname = "oyasumivr"\r\nversion = "${version}"`
+  /\[package\]\r?\nname = "sleepfit"\r?\nversion = "[0-9]+\.[0-9]+\.[0-9]+"/g,
+  `[package]\r\nname = "sleepfit"\r\nversion = "${version}"`
 );
 writeFileSync('src-core/Cargo.toml', tauriCargoToml);
 
