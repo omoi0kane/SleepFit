@@ -58,7 +58,7 @@ async fn request_handler(req: Request<Body>) -> Result<Response<Body>, Infallibl
 fn response_404() -> Result<Response<Body>, Infallible> {
     Ok(Response::builder()
         .status(404)
-        .body("OyasumiVR Main HTTP Server".into())
+        .body("SleepFit Main HTTP Server".into())
         .unwrap())
 }
 

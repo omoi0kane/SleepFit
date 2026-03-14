@@ -39,7 +39,7 @@ impl NotificationSender {
                 data: Some(msg),
                 notify: false,
                 user_id: None,
-                display_name: Some("OyasumiVR".to_string()),
+                display_name: Some("SleepFit".to_string()),
             };
             if let Err(err) =
                 sender.write(format!("{}\0", serde_json::to_string(&msg).unwrap()).as_bytes())

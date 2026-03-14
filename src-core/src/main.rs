@@ -48,7 +48,7 @@ async fn main() {
         use windows::Win32::System::Console::{AttachConsole, ATTACH_PARENT_PROCESS};
         let _ = unsafe { AttachConsole(ATTACH_PARENT_PROCESS) };
     }
-    // Construct OyasumiVR Tauri application
+    // Construct SleepFit Tauri application
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(configure_tauri_plugin_single_instance())
@@ -83,7 +83,7 @@ async fn main() {
             ))) {
                 Ok(_) => {}
                 Err(e) => {
-                    eprintln!("Error during Oyasumi's application setup: {e}");
+                    eprintln!("Error during SleepFit application setup: {e}");
                     app.handle().exit(1);
                 }
             }
@@ -193,7 +193,7 @@ async fn app_setup(app_handle: tauri::AppHandle) {
     os::elevation::process_elevation_cli_args().await;
 
     info!(
-        "[Core] Starting OyasumiVR in {} mode",
+        "[Core] Starting SleepFit in {} mode",
         crate::utils::cli_core_mode().await
     );
     // Ensure the working directory is the installation directory

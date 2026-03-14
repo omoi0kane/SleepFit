@@ -63,8 +63,8 @@ async fn create_overlay(
     let mut manager = context.overlay_mngr();
     // Create the overlay
     let result = manager.create_overlay(
-        "co.raphii.oyasumi:BrightnessOverlay",
-        "OyasumiVR Brightness Overlay",
+        "com.fleabane.sleepfit:BrightnessOverlay",
+        "SleepFit Brightness Overlay",
     );
     let overlay: ovr_overlay::overlay::OverlayHandle = match result {
         Ok(handle) => handle,

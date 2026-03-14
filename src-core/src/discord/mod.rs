@@ -144,7 +144,7 @@ pub async fn update_activity(
         .state(state.as_str())
         .assets(ds::activity::Assets::default().large(asset.as_str(), asset_label))
         .button(ds::activity::Button {
-            label: "OyasumiVR".to_owned(),
+            label: "SleepFit".to_owned(),
             url: "https://store.steampowered.com/app/2538150/OyasumiVR__VR_Sleeping_Utilities/"
                 .to_owned(),
         })
