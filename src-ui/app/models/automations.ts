@@ -615,7 +615,7 @@ export const AUTOMATION_CONFIGS_DEFAULT: AutomationConfigs = {
             transitionTimeMs: 900000,
           },
         ],
-        endBehavior: 'ENABLE_SLEEP_MODE',
+        endBehavior: 'NONE',
       },
       wake: {
         enabled: true,

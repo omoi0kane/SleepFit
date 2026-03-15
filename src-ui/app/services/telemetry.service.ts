@@ -22,6 +22,9 @@ import { isEqual } from 'lodash';
   providedIn: 'root',
 })
 export class TelemetryService {
+  // PoC builds should not send Aptabase data. Force telemetry off even when older
+  // saved settings still contain enabled=true, so the UI and runtime stay in sync.
+  private readonly forceDisabled = true;
   private _settings: BehaviorSubject<TelemetrySettings> = new BehaviorSubject<TelemetrySettings>(
     TELEMETRY_SETTINGS_DEFAULT
   );
@@ -86,6 +89,7 @@ export class TelemetryService {
       SETTINGS_KEY_TELEMETRY_SETTINGS
     );
     settings = settings ? migrateTelemetrySettings(settings) : this._settings.value;
+    if (this.forceDisabled) settings.enabled = false;
     this._settings.next(settings);
     await this.saveSettings();
   }
@@ -96,6 +100,7 @@ export class TelemetryService {
 
   async updateSettings(settings: Partial<TelemetrySettings>) {
     const newSettings = Object.assign(structuredClone(this._settings.value), settings);
+    if (this.forceDisabled) newSettings.enabled = false;
     this._settings.next(newSettings);
     await this.saveSettings();
   }

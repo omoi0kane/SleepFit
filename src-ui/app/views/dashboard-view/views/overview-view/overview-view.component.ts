@@ -6,6 +6,7 @@ import { OscService } from '../../../../services/osc.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SleepPreparationService } from '../../../../services/sleep-preparation.service';
 import { SleepWakeTransitionService } from '../../../../services/sleep-wake-transition.service';
+import { AutomationConfigService } from '../../../../services/automation-config.service';
 import { isHolidaysEventActive } from 'src-ui/app/utils/event-utils';
 
 type IllustrationVariant = 'sleep' | 'peek' | 'awake' | 'awake-hover';
@@ -22,11 +23,13 @@ export class OverviewViewComponent implements OnInit {
   illustrationPath: string | null = null;
   illustrationVariant: IllustrationVariant | null = null;
   mouseover = false;
+  sleepWakeTransitionsEnabled = false;
 
   constructor(
     private sleep: SleepService,
     public openvr: OpenVRService,
     public osc: OscService,
+    private automationConfig: AutomationConfigService,
     private destroyRef: DestroyRef,
     protected sleepPreparation: SleepPreparationService,
     protected sleepWakeTransitions: SleepWakeTransitionService
@@ -37,6 +40,11 @@ export class OverviewViewComponent implements OnInit {
       this.sleepModeActive = sleepModeActive;
       this.determineIllustrationPath();
     });
+    this.automationConfig.configs
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((configs) => {
+        this.sleepWakeTransitionsEnabled = configs.SLEEP_WAKE_TRANSITIONS.enabled;
+      });
   }
 
   async setSleepMode(enabled: boolean) {

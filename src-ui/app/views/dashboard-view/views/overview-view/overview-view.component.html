@@ -46,8 +46,12 @@
           </button>
         </div>
       }
-      <button class="btn btn-secondary" (click)="applySleepTransition()">入眠誘導を実行</button>
-      <button class="btn btn-secondary" (click)="revertSleepTransition()">起床側へ戻す</button>
+      @if (sleepWakeTransitionsEnabled) {
+        <button class="btn btn-secondary" (click)="applySleepTransition()">入眠誘導を実行</button>
+      }
+      @if (sleepWakeTransitionsEnabled) {
+        <button class="btn btn-secondary" (click)="revertSleepTransition()">起床側へ戻す</button>
+      }
     </div>
     @for (i of ['sleep', 'peek', 'awake', 'awake-hover']; track i) {
       <div class="illustration" [ngClass]="[i, illustrationVariant === i ? 'active' : '']">

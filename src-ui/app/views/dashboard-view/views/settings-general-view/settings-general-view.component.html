@@ -285,10 +285,17 @@
                 <input
                   type="checkbox"
                   [checked]="telemetrySettings.enabled"
+                  [disabled]="true"
                   (change)="setTelemetryEnabled(!telemetrySettings.enabled)"
                 />
                 <span class="switch-toggle-slider"></span>
               </label>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <span>PoC 版ではテレメトリ送信を常に無効化しています。</span>
+              <span>Aptabase への送信を止め、検証ログを見やすくするための固定設定です。</span>
             </div>
           </div>
         </div>
