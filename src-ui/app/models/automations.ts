@@ -9,6 +9,7 @@ import { getBuiltInNotificationSound, NotificationSound } from './notification-s
 import { DeviceSelection } from './device-manager';
 
 export type AutomationType =
+  | 'SLEEP_WAKE_TRANSITIONS'
   | 'GPU_POWER_LIMITS'
   | 'MSI_AFTERBURNER'
   | 'SLEEP_MODE_ENABLE_FOR_SLEEP_DETECTOR'
@@ -49,8 +50,9 @@ export type AutomationType =
   | 'RUN_AUTOMATIONS';
 
 export interface AutomationConfigs {
-  version: 18;
+  version: 19;
   // CORE SLEEP FUNCTIONALITY
+  SLEEP_WAKE_TRANSITIONS: SleepWakeTransitionsConfig;
   SLEEP_MODE_ENABLE_FOR_SLEEP_DETECTOR: SleepModeEnableForSleepDetectorAutomationConfig;
   SLEEP_MODE_ENABLE_AT_TIME: SleepModeEnableAtTimeAutomationConfig;
   SLEEP_MODE_ENABLE_AT_BATTERY_PERCENTAGE: SleepModeEnableAtBatteryPercentageAutomationConfig;
@@ -105,6 +107,46 @@ export interface AutomationConfigs {
 
 export interface AutomationConfig {
   enabled: boolean;
+}
+
+export interface SleepWakeTransitionTarget {
+  changeBrightness: boolean;
+  brightness: number;
+  softwareBrightness: number;
+  hardwareBrightness: number;
+  changeColorTemperature: boolean;
+  colorTemperature: number;
+  changeVolume: boolean;
+  volume: number | null;
+  transitionTimeMs: number;
+}
+
+export interface SleepWakeTransitionStep extends SleepWakeTransitionTarget {
+  id: string;
+  offsetMinutes: number;
+}
+
+export type SleepWakeTransitionEndBehavior = 'NONE' | 'ENABLE_SLEEP_MODE' | 'RUN_SLEEP_PREPARATION';
+export type SleepWakeTransitionProfileType = 'sleep' | 'wake';
+
+export interface SleepWakeTransitionProfile extends AutomationConfig {
+  manualTarget: SleepWakeTransitionTarget;
+  steps: SleepWakeTransitionStep[];
+  endBehavior: SleepWakeTransitionEndBehavior;
+}
+
+export interface SleepWakeTransitionsConfig extends AutomationConfig {
+  audioDevicePersistentId: string | null;
+  schedules: {
+    sleepEnabled: boolean;
+    sleepStartTime: string | null;
+    wakeEnabled: boolean;
+    wakeStartTime: string | null;
+  };
+  profiles: {
+    sleep: SleepWakeTransitionProfile;
+    wake: SleepWakeTransitionProfile;
+  };
 }
 
 //
@@ -520,8 +562,106 @@ export interface RunAutomationsConfig extends AutomationConfig {
 //
 
 export const AUTOMATION_CONFIGS_DEFAULT: AutomationConfigs = {
-  version: 18,
+  version: 19,
   // CORE SLEEP FUNCTIONALITY
+  SLEEP_WAKE_TRANSITIONS: {
+    enabled: false,
+    audioDevicePersistentId: 'DEFAULT_RENDER',
+    schedules: {
+      sleepEnabled: false,
+      sleepStartTime: null,
+      wakeEnabled: false,
+      wakeStartTime: null,
+    },
+    profiles: {
+      sleep: {
+        enabled: true,
+        manualTarget: {
+          changeBrightness: true,
+          brightness: 35,
+          softwareBrightness: 35,
+          hardwareBrightness: 100,
+          changeColorTemperature: true,
+          colorTemperature: 2400,
+          changeVolume: true,
+          volume: 20,
+          transitionTimeMs: 10000,
+        },
+        steps: [
+          {
+            id: 'sleep-step-1',
+            offsetMinutes: 0,
+            changeBrightness: true,
+            brightness: 60,
+            softwareBrightness: 60,
+            hardwareBrightness: 100,
+            changeColorTemperature: true,
+            colorTemperature: 4000,
+            changeVolume: true,
+            volume: 45,
+            transitionTimeMs: 600000,
+          },
+          {
+            id: 'sleep-step-2',
+            offsetMinutes: 20,
+            changeBrightness: true,
+            brightness: 35,
+            softwareBrightness: 35,
+            hardwareBrightness: 100,
+            changeColorTemperature: true,
+            colorTemperature: 2400,
+            changeVolume: true,
+            volume: 20,
+            transitionTimeMs: 900000,
+          },
+        ],
+        endBehavior: 'ENABLE_SLEEP_MODE',
+      },
+      wake: {
+        enabled: true,
+        manualTarget: {
+          changeBrightness: true,
+          brightness: 85,
+          softwareBrightness: 85,
+          hardwareBrightness: 100,
+          changeColorTemperature: true,
+          colorTemperature: 5600,
+          changeVolume: true,
+          volume: 55,
+          transitionTimeMs: 10000,
+        },
+        steps: [
+          {
+            id: 'wake-step-1',
+            offsetMinutes: 0,
+            changeBrightness: true,
+            brightness: 55,
+            softwareBrightness: 55,
+            hardwareBrightness: 100,
+            changeColorTemperature: true,
+            colorTemperature: 3600,
+            changeVolume: true,
+            volume: 35,
+            transitionTimeMs: 600000,
+          },
+          {
+            id: 'wake-step-2',
+            offsetMinutes: 20,
+            changeBrightness: true,
+            brightness: 85,
+            softwareBrightness: 85,
+            hardwareBrightness: 100,
+            changeColorTemperature: true,
+            colorTemperature: 5600,
+            changeVolume: true,
+            volume: 55,
+            transitionTimeMs: 900000,
+          },
+        ],
+        endBehavior: 'NONE',
+      },
+    },
+  },
   SLEEP_MODE_ENABLE_FOR_SLEEP_DETECTOR: {
     enabled: false,
     calibrationValue: 0.01,

@@ -15,6 +15,9 @@ export const EVENT_LOG_DEFAULT: EventLog = {
 };
 
 export type EventLogEntry =
+  | EventLogSleepWakeTransitionStarted
+  | EventLogSleepWakeTransitionFinished
+  | EventLogSleepWakeTransitionCancelled
   | EventLogSleepModeEnabled
   | EventLogSleepModeDisabled
   | EventLogTurnedOffOpenVRDevices
@@ -52,6 +55,9 @@ export type EventLogEntry =
 export type EventLogDraft = Omit<EventLogEntry, 'time' | 'id'>;
 
 export type EventLogType =
+  | 'sleepWakeTransitionStarted'
+  | 'sleepWakeTransitionFinished'
+  | 'sleepWakeTransitionCancelled'
   | 'sleepModeEnabled'
   | 'sleepModeDisabled'
   | 'turnedOffOpenVRDevices'
@@ -90,6 +96,29 @@ export interface EventLogBase {
   id: string;
   type: EventLogType;
   time: number;
+}
+
+export interface EventLogSleepWakeTransitionStarted extends EventLogBase {
+  type: 'sleepWakeTransitionStarted';
+  profile: 'sleep' | 'wake';
+  reason: 'MANUAL' | 'SCHEDULED';
+}
+
+export interface EventLogSleepWakeTransitionFinished extends EventLogBase {
+  type: 'sleepWakeTransitionFinished';
+  profile: 'sleep' | 'wake';
+  reason: 'MANUAL' | 'SCHEDULED';
+}
+
+export interface EventLogSleepWakeTransitionCancelled extends EventLogBase {
+  type: 'sleepWakeTransitionCancelled';
+  profile: 'sleep' | 'wake';
+  reason:
+    | 'MANUAL_OVERRIDE'
+    | 'MANUAL_REVERT'
+    | 'USER_INTERVENTION'
+    | 'SCHEDULE_SKIPPED'
+    | 'SYSTEM';
 }
 
 export type EventLogShutdownSequenceStartedReason =

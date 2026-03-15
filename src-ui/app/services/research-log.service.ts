@@ -105,6 +105,39 @@ export class ResearchLogService {
     this.logEvent('sleep_preparation_timed_out', 'system', payload);
   }
 
+  logSleepWakeTransitionStarted(
+    profile: 'sleep' | 'wake',
+    source: ResearchEventSource,
+    payload: Record<string, unknown>
+  ) {
+    this.logEvent('sleep_wake_transition_started', source, {
+      profile,
+      ...payload,
+    });
+  }
+
+  logSleepWakeTransitionFinished(
+    profile: 'sleep' | 'wake',
+    source: ResearchEventSource,
+    payload: Record<string, unknown>
+  ) {
+    this.logEvent('sleep_wake_transition_finished', source, {
+      profile,
+      ...payload,
+    });
+  }
+
+  logSleepWakeTransitionCancelled(
+    profile: 'sleep' | 'wake',
+    source: ResearchEventSource,
+    payload: Record<string, unknown>
+  ) {
+    this.logEvent('sleep_wake_transition_cancelled', source, {
+      profile,
+      ...payload,
+    });
+  }
+
   logBrightnessChanged(
     brightnessType: 'simple' | 'software' | 'hardware',
     source: ResearchEventSource,

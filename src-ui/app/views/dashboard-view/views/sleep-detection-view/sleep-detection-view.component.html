@@ -10,6 +10,13 @@
     <div class="tab" [class.active]="activeTab === 'DISABLE'" (click)="activeTab = 'DISABLE'">
       <div class="tab-label" translate>sleep-detection.tab.disabling</div>
     </div>
+    <div
+      class="tab"
+      [class.active]="activeTab === 'TRANSITIONS'"
+      (click)="activeTab = 'TRANSITIONS'"
+    >
+      <div class="tab-label">Transitions</div>
+    </div>
   </div>
   <div class="pane-content">
     <div class="setting-view-container">
@@ -21,6 +28,9 @@
       }
       @if (activeTab === 'DISABLE') {
         <app-sleep-detection-sleep-disable-tab></app-sleep-detection-sleep-disable-tab>
+      }
+      @if (activeTab === 'TRANSITIONS') {
+        <app-sleep-wake-transition-tab></app-sleep-wake-transition-tab>
       }
     </div>
   </div>

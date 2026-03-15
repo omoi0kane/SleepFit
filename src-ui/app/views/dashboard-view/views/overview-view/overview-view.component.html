@@ -46,6 +46,12 @@
           </button>
         </div>
       }
+      <button class="btn btn-secondary" (click)="applySleepTransition()">
+        Apply sleep transition
+      </button>
+      <button class="btn btn-secondary" (click)="revertSleepTransition()">
+        Revert transition
+      </button>
     </div>
     @for (i of ['sleep', 'peek', 'awake', 'awake-hover']; track i) {
       <div class="illustration" [ngClass]="[i, illustrationVariant === i ? 'active' : '']">

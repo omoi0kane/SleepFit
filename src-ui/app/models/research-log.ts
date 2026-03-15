@@ -1,4 +1,7 @@
 export type ResearchEventType =
+  | 'sleep_wake_transition_started'
+  | 'sleep_wake_transition_finished'
+  | 'sleep_wake_transition_cancelled'
   | 'app_started'
   | 'app_stopped'
   | 'session_started'

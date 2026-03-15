@@ -36,6 +36,9 @@ import { EventLogVRChatGroupChangedEntryParser } from './entry-parsers/vrchat-gr
 import { EventLogCCTChangedEntryParser } from './entry-parsers/cct-changed';
 import { EventLogFrameLimitChangedEntryParser } from './entry-parsers/frame-limit-changed';
 import { EventLogRunAutomationExecutedEntryParser } from './entry-parsers/run-automation-executed';
+import { EventLogSleepWakeTransitionStartedEntryParser } from './entry-parsers/sleep-wake-transition-started';
+import { EventLogSleepWakeTransitionFinishedEntryParser } from './entry-parsers/sleep-wake-transition-finished';
+import { EventLogSleepWakeTransitionCancelledEntryParser } from './entry-parsers/sleep-wake-transition-cancelled';
 import { EventLogEntry } from '../../../models/event-log-entry';
 
 @Component({
@@ -83,6 +86,9 @@ export class EventLogEntryComponent implements OnInit, OnChanges {
     new EventLogCCTChangedEntryParser(),
     new EventLogFrameLimitChangedEntryParser(),
     new EventLogRunAutomationExecutedEntryParser(),
+    new EventLogSleepWakeTransitionStartedEntryParser(),
+    new EventLogSleepWakeTransitionFinishedEntryParser(),
+    new EventLogSleepWakeTransitionCancelledEntryParser(),
   ];
 
   constructor(

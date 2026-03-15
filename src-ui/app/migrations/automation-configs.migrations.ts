@@ -24,6 +24,7 @@ const migrations: { [v: number]: (data: any) => any } = {
   16: from15to16,
   17: from16to17,
   18: from17to18,
+  19: from18to19,
 };
 
 export function migrateAutomationConfigs(data: any): AutomationConfigs {
@@ -243,6 +244,12 @@ function from17to18(data: any): any {
     delete data.SHUTDOWN_AUTOMATIONS.turnOffBaseStations;
   }
 
+  return data;
+}
+
+function from18to19(data: any): any {
+  data.version = 19;
+  data.SLEEP_WAKE_TRANSITIONS = structuredClone(AUTOMATION_CONFIGS_DEFAULT.SLEEP_WAKE_TRANSITIONS);
   return data;
 }
 

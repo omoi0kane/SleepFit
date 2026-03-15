@@ -16,6 +16,11 @@ const PERSISTENT_ID_TRAIL = ']';
 export class AudioDeviceService {
   private readonly _activeDevices = new BehaviorSubject<AudioDevice[]>([]);
   public readonly activeDevices = this._activeDevices.asObservable();
+  private readonly _manualVolumeChange = new BehaviorSubject<{
+    deviceId: string;
+    source: ResearchEventSource;
+  } | null>(null);
+  public readonly manualVolumeChange = this._manualVolumeChange.asObservable();
 
   constructor(private researchLog: ResearchLogService) {}
 
@@ -57,6 +62,9 @@ export class AudioDeviceService {
     const oldVolume = device?.volume ?? null;
     this.patchDevice(deviceId, { volume });
     await invoke('set_audio_device_volume', { deviceId, volume });
+    if (source.startsWith('user_')) {
+      this._manualVolumeChange.next({ deviceId, source });
+    }
     this.researchLog.logVolumeChanged(source, {
       device_id: deviceId,
       device_name: device?.name,

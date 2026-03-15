@@ -205,6 +205,7 @@ import { HeartRateChartComponent } from './views/dashboard-view/views/sleep-dete
 import { SleepDetectionDetectionTabComponent } from './views/dashboard-view/views/sleep-detection-view/tabs/sleep-detection-detection-tab/sleep-detection-detection-tab.component';
 import { SleepDetectionSleepEnableTabComponent } from './views/dashboard-view/views/sleep-detection-view/tabs/sleep-detection-sleep-enable-tab/sleep-detection-sleep-enable-tab.component';
 import { SleepDetectionSleepDisableTabComponent } from './views/dashboard-view/views/sleep-detection-view/tabs/sleep-detection-sleep-disable-tab/sleep-detection-sleep-disable-tab.component';
+import { SleepWakeTransitionTabComponent } from './views/dashboard-view/views/sleep-detection-view/tabs/sleep-wake-transition-tab/sleep-wake-transition-tab.component';
 import { SleepDetectionViewComponent } from './views/dashboard-view/views/sleep-detection-view/sleep-detection-view.component';
 import { WindowTitlebarComponent } from './components/window-titlebar/window-titlebar.component';
 import { ShutdownAutomationsTriggersTabComponent } from './views/dashboard-view/views/shutdown-automations-view/tabs/shutdown-automations-triggers-tab/shutdown-automations-triggers-tab.component';
@@ -258,6 +259,8 @@ import { DevicePowerButtonComponent } from './components/device-power-button/dev
 import { DeviceManagerDevicesTabComponent } from './views/dashboard-view/views/device-manager-view/tabs/device-manager-devices-tab/device-manager-devices-tab.component';
 import { DeviceManagerTagsTabComponent } from './views/dashboard-view/views/device-manager-view/tabs/device-manager-tags-tab/device-manager-tags-tab.component';
 import { LighthouseForceStatePopoverComponent } from './components/lighthouse-force-state-popover/lighthouse-force-state-popover.component';
+import { SleepWakeTransitionService } from './services/sleep-wake-transition.service';
+import { SleepWakeTransitionScheduleAutomationService } from './services/sleep-wake-transition-schedule-automation.service';
 import { OyasumiVRSteamVRDevicePowerAutomationsService } from './services/power-automations/oyasumivr-steamvr-device-power-automations.service';
 import { SleepDevicePowerAutomationsService } from './services/power-automations/sleep-device-power-automations.service';
 import { TurnOffDevicesWhenChargingAutomationService } from './services/power-automations/turn-off-devices-when-charging-automation.service';
@@ -392,6 +395,7 @@ export function createTranslateLoader(http: HttpClient) {
     SleepDetectionDetectionTabComponent,
     SleepDetectionSleepEnableTabComponent,
     SleepDetectionSleepDisableTabComponent,
+    SleepWakeTransitionTabComponent,
     WindowTitlebarComponent,
     ShutdownAutomationsTriggersTabComponent,
     ShutdownAutomationsSettingsTabComponent,
@@ -484,6 +488,7 @@ export class AppModule {
     private steamService: SteamService,
     private deepLinkService: DeepLinkService,
     private sleepPreparationService: SleepPreparationService,
+    private sleepWakeTransitionService: SleepWakeTransitionService,
     private pulsoidService: PulsoidService,
     private quitWithSteamVRService: QuitWithSteamVRService,
     private audioDeviceService: AudioDeviceService,
@@ -517,6 +522,7 @@ export class AppModule {
     private sleepModeDisableOnDevicePowerOnAutomationService: SleepModeDisableOnDevicePowerOnAutomationService,
     private sleepModeDisableOnUprightPoseAutomationService: SleepModeDisableOnUprightPoseAutomationService,
     private sleepModeDisableOnPlayerJoinLeaveAutomationService: SleepModeDisableOnPlayerJoinLeaveAutomationService,
+    private sleepWakeTransitionScheduleAutomationService: SleepWakeTransitionScheduleAutomationService,
     // Power automations
     private oyasumivrSteamvrDevicePowerAutomationsService: OyasumiVRSteamVRDevicePowerAutomationsService,
     private sleepDevicePowerAutomationsService: SleepDevicePowerAutomationsService,
@@ -626,6 +632,10 @@ export class AppModule {
             this.logInit('Initializing notifications', this.notificationService.init()),
             this.logInit('Initializing frame limiting', this.frameLimiterService.init()),
             this.logInit('Initializing sleep preparation', this.sleepPreparationService.init()),
+            this.logInit(
+              'Initializing sleep / wake transitions',
+              this.sleepWakeTransitionService.init()
+            ),
             this.logInit('Initializing Pulsoid', this.pulsoidService.init()),
             this.logInit('Initializing quitting with SteamVR', this.quitWithSteamVRService.init()),
             this.logInit('Initializing audio device services', this.audioDeviceService.init()),
@@ -731,6 +741,10 @@ export class AppModule {
             this.logInit(
               'Initializing sleep mode automation (#10)',
               this.sleepModeDisableOnPlayerJoinLeaveAutomationService.init()
+            ),
+            this.logInit(
+              'Initializing sleep / wake transition schedules',
+              this.sleepWakeTransitionScheduleAutomationService.init()
             ),
             // Power automations
             this.logInit(

@@ -5,6 +5,7 @@ import { OpenVRService } from '../../../../services/openvr.service';
 import { OscService } from '../../../../services/osc.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SleepPreparationService } from '../../../../services/sleep-preparation.service';
+import { SleepWakeTransitionService } from '../../../../services/sleep-wake-transition.service';
 import { isHolidaysEventActive } from 'src-ui/app/utils/event-utils';
 
 type IllustrationVariant = 'sleep' | 'peek' | 'awake' | 'awake-hover';
@@ -27,7 +28,8 @@ export class OverviewViewComponent implements OnInit {
     public openvr: OpenVRService,
     public osc: OscService,
     private destroyRef: DestroyRef,
-    protected sleepPreparation: SleepPreparationService
+    protected sleepPreparation: SleepPreparationService,
+    protected sleepWakeTransitions: SleepWakeTransitionService
   ) {}
 
   ngOnInit(): void {
@@ -47,6 +49,14 @@ export class OverviewViewComponent implements OnInit {
 
   async prepareForSleep() {
     await this.sleepPreparation.prepareForSleep('user_desktop_ui');
+  }
+
+  async applySleepTransition() {
+    await this.sleepWakeTransitions.applyManualSleepTransition('user_desktop_ui');
+  }
+
+  async revertSleepTransition() {
+    await this.sleepWakeTransitions.revertManualSleepTransition('user_desktop_ui');
   }
 
   protected determineIllustrationPath(mouseover: boolean | null = null) {

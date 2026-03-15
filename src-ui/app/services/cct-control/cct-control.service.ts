@@ -27,8 +27,10 @@ import { ResearchLogService } from '../research-log.service';
 export class CCTControlService {
   private _cct: BehaviorSubject<number> = new BehaviorSubject<number>(6600);
   private _activeTransition = new BehaviorSubject<CCTTransitionTask | undefined>(undefined);
+  private _manualChange = new BehaviorSubject<{ source: string } | null>(null);
   private hardwareReady = false;
   public readonly activeTransition = this._activeTransition.asObservable();
+  public readonly manualChange = this._manualChange.asObservable();
   public cctCSSColor: string = 'white';
   private cctControlEnabled: boolean = false;
   private initialized = false;
@@ -135,6 +137,9 @@ export class CCTControlService {
     this._cct.next(cct);
     if (this.hardwareReady) invoke('openvr_set_analog_color_temp', { temperature: cct });
     if (oldCct !== cct) {
+      if ((opt.researchSource ?? '').startsWith('user_')) {
+        this._manualChange.next({ source: opt.researchSource! });
+      }
       this.researchLog.logColorTemperatureChanged(
         opt.logReason ? 'automation' : ((opt.researchSource as any) ?? 'unknown'),
         {

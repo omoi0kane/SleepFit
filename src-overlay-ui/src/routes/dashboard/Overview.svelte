@@ -116,12 +116,52 @@
 				</Card>
 			</Clickable>
 		</div>
-		<!-- AUTOMATION CONFIG -->
 		<div
 			transition:blurFly|global={{
 				duration: animationSpeed,
 				y: flyYTransform,
 				delay: staggerOffset * 3
+			}}
+		>
+			<Clickable
+				on:click={() => {
+					ipc.applySleepTransition();
+				}}
+				tooltip="Apply sleep transition"
+			>
+				<Card clickable={true} class="w-full h-full">
+					<div class="flex flex-row items-center justify-center w-full h-full p-6">
+						<i class="material-icons-outlined glow text-8xl flex-shrink-0">dark_mode</i>
+					</div>
+				</Card>
+			</Clickable>
+		</div>
+		<div
+			transition:blurFly|global={{
+				duration: animationSpeed,
+				y: flyYTransform,
+				delay: staggerOffset * 4
+			}}
+		>
+			<Clickable
+				on:click={() => {
+					ipc.revertSleepTransition();
+				}}
+				tooltip="Revert sleep transition"
+			>
+				<Card clickable={true} class="w-full h-full">
+					<div class="flex flex-row items-center justify-center w-full h-full p-6">
+						<i class="material-icons-outlined glow text-8xl flex-shrink-0">light_mode</i>
+					</div>
+				</Card>
+			</Clickable>
+		</div>
+		<!-- AUTOMATION CONFIG -->
+		<div
+			transition:blurFly|global={{
+				duration: animationSpeed,
+				y: flyYTransform,
+				delay: staggerOffset * 5
 			}}
 		>
 			<Clickable
@@ -142,7 +182,7 @@
 			transition:blurFly|global={{
 				duration: animationSpeed,
 				y: flyYTransform,
-				delay: staggerOffset * 4
+				delay: staggerOffset * 6
 			}}
 		>
 			<Clickable
@@ -165,7 +205,7 @@
 			transition:blurFly|global={{
 				duration: animationSpeed,
 				y: flyYTransform,
-				delay: staggerOffset * 5
+				delay: staggerOffset * 7
 			}}
 		>
 			<Clickable
@@ -188,7 +228,7 @@
 		transition:blurFly|global={{
 			duration: animationSpeed,
 			y: flyYTransform,
-			delay: staggerOffset * 6
+			delay: staggerOffset * 8
 		}}
 	>
 		{#if !!cctState}
@@ -246,7 +286,7 @@
 		transition:blurFly|global={{
 			duration: animationSpeed,
 			y: flyYTransform,
-			delay: staggerOffset * 7
+			delay: staggerOffset * 9
 		}}
 	>
 		{#if $sliderMode === 'BRIGHTNESS'}

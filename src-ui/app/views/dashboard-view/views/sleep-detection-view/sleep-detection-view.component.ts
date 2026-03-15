@@ -8,7 +8,7 @@ import { Component } from '@angular/core';
   standalone: false,
 })
 export class SleepDetectionViewComponent {
-  activeTab: 'DETECTION' | 'ENABLE' | 'DISABLE' = 'DETECTION';
+  activeTab: 'DETECTION' | 'ENABLE' | 'DISABLE' | 'TRANSITIONS' = 'DETECTION';
 
   constructor() {}
 }

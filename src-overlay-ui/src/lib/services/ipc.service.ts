@@ -183,6 +183,14 @@ class IPCService {
 		await window.OyasumiIPCOut.sendEventVoid('prepareForSleep');
 	}
 
+	public async applySleepTransition() {
+		await window.OyasumiIPCOut.sendEventVoid('applySleepWakeTransitionManualSleep');
+	}
+
+	public async revertSleepTransition() {
+		await window.OyasumiIPCOut.sendEventVoid('revertSleepWakeTransitionManualSleep');
+	}
+
 	public async getDebugTranslations(): Promise<any> {
 		const str = await window.OyasumiIPCOut.getDebugTranslations();
 		if (!str) return {};

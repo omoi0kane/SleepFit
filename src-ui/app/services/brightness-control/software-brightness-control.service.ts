@@ -19,7 +19,9 @@ export const DEFAULT_SOFTWARE_BRIGHTNESS_GAMMA = 0.55;
 export class SoftwareBrightnessControlService {
   private _brightness: BehaviorSubject<number> = new BehaviorSubject<number>(100);
   private _activeTransition = new BehaviorSubject<BrightnessTransitionTask | undefined>(undefined);
+  private _manualChange = new BehaviorSubject<{ source: string } | null>(null);
   public readonly activeTransition = this._activeTransition.asObservable();
+  public readonly manualChange = this._manualChange.asObservable();
   private _perceivedBrightnessAdjustmentGamma: number | null = DEFAULT_SOFTWARE_BRIGHTNESS_GAMMA;
 
   get brightness(): number {
@@ -116,6 +118,9 @@ export class SoftwareBrightnessControlService {
     const oldBrightness = this.brightness;
     this._brightness.next(percentage);
     await this.setSoftwareBrightness(percentage);
+    if ((opt.researchSource ?? '').startsWith('user_')) {
+      this._manualChange.next({ source: opt.researchSource! });
+    }
     if (opt.logResearchEvent) {
       this.researchLog.logBrightnessChanged(
         'software',

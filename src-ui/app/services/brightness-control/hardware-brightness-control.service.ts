@@ -41,7 +41,9 @@ export class HardwareBrightnessControlService {
     new BehaviorSubject<HardwareBrightnessControlDriver | null>(null);
   private _brightness: BehaviorSubject<number> = new BehaviorSubject<number>(100);
   private _activeTransition = new BehaviorSubject<BrightnessTransitionTask | undefined>(undefined);
+  private _manualChange = new BehaviorSubject<{ source: string } | null>(null);
   public readonly activeTransition = this._activeTransition.asObservable();
+  public readonly manualChange = this._manualChange.asObservable();
   public readonly onDriverChange: Observable<void> = this.driver.pipe(
     distinctUntilChanged(),
     map(() => void 0)
@@ -172,6 +174,9 @@ export class HardwareBrightnessControlService {
     const oldBrightness = this.brightness;
     this._brightness.next(percentage);
     await driver.setBrightnessPercentage(percentage);
+    if ((opt.researchSource ?? '').startsWith('user_')) {
+      this._manualChange.next({ source: opt.researchSource! });
+    }
     if (opt.logResearchEvent) {
       this.researchLog.logBrightnessChanged(
         'hardware',

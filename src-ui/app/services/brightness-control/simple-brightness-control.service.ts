@@ -31,7 +31,9 @@ export class SimpleBrightnessControlService {
   private _advancedMode = new BehaviorSubject(false);
   private _brightness: BehaviorSubject<number> = new BehaviorSubject<number>(100);
   private _activeTransition = new BehaviorSubject<BrightnessTransitionTask | undefined>(undefined);
+  private _manualChange = new BehaviorSubject<{ source: string } | null>(null);
   public readonly activeTransition = this._activeTransition.asObservable();
+  public readonly manualChange = this._manualChange.asObservable();
   private hardwareBrightnessDriverAvailable = false;
   public readonly advancedMode = this._advancedMode.asObservable();
 
@@ -187,6 +189,9 @@ export class SimpleBrightnessControlService {
         researchSource: opt.researchSource,
         logResearchEvent: false,
       });
+    }
+    if ((opt.researchSource ?? '').startsWith('user_') && oldBrightness !== percentage) {
+      this._manualChange.next({ source: opt.researchSource! });
     }
     if (opt.logResearchEvent && oldBrightness !== percentage) {
       this.researchLog.logBrightnessChanged(
