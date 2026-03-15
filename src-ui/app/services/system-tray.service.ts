@@ -101,13 +101,13 @@ export class SystemTrayService {
           },
         },
         {
-          text: 'Apply sleep transition',
+          text: '入眠誘導を実行',
           action: async () => {
             await this.sleepWakeTransitions.applyManualSleepTransition('user_tray');
           },
         },
         {
-          text: 'Revert sleep transition',
+          text: '起床側へ戻す',
           action: async () => {
             await this.sleepWakeTransitions.revertManualSleepTransition('user_tray');
           },
