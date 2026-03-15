@@ -138,6 +138,14 @@ export class ResearchLogService {
     });
   }
 
+  rememberSleepWakeTransitionDomain(
+    domain: Extract<ResearchDomain, 'brightness' | 'color_temperature' | 'volume'>,
+    profile: 'sleep' | 'wake',
+    reason: 'MANUAL' | 'SCHEDULED'
+  ) {
+    this.rememberAutomation(domain, 'SLEEP_WAKE_TRANSITION', `${profile}:${reason}`);
+  }
+
   logBrightnessChanged(
     brightnessType: 'simple' | 'software' | 'hardware',
     source: ResearchEventSource,

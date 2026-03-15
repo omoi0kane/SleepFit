@@ -56,10 +56,12 @@ export class BrightnessTransitionTask extends CancellableTask {
       // Sleep to match the frequency
       await new Promise((resolve) => setTimeout(resolve, 1000 / this.options.frequency!));
       // Stop if the transition was cancelled
-      if (task.isCancelled() && this.options.logReason) {
-        info(
-          `[BrightnessControl] Cancelled running ${label} brightness transition (${currentBrightness}%=>${this.targetBrightness}%, ${this.duration}ms, Reason: ${this.options.logReason})`
-        );
+      if (task.isCancelled()) {
+        if (this.options.logReason) {
+          info(
+            `[BrightnessControl] Cancelled running ${label} brightness transition (${currentBrightness}%=>${this.targetBrightness}%, ${this.duration}ms, Reason: ${this.options.logReason})`
+          );
+        }
         return;
       }
       // Calculate the required brightness
