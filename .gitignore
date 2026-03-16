@@ -5,6 +5,7 @@
 /tmp
 /out-tsc
 /bazel-out
+/dev
 
 # Node
 /node_modules
@@ -62,3 +63,7 @@ src-ui/assets/splashscreen/splash-blurhash.css
 .cursorignore
 /.cursor
 .claude/
+
+# Original image
+src-ui/assets/img/about_bg_original.jpg
+src-ui/assets/splashscreen/splash_original.jpg

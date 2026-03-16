@@ -1,0 +1,330 @@
+<div class="setting-category">
+  <p>
+    入眠誘導と起床誘導の設定です。手動実行、または指定時刻からの自動実行に使われます。
+    Sleep mode の ON/OFF 自体は、この機能ではなく既存の寝落ち検知や有効化・無効化条件で行います。
+  </p>
+
+  <div class="settings">
+    <div class="setting-row">
+      <div class="setting-row-label">
+        <span class="row-title">入眠・起床誘導を有効化</span>
+        <span>この機能全体の ON / OFF です。OFF の間は手動実行もスケジュール実行も行いません。</span>
+      </div>
+      <div class="setting-row-action">
+        <label class="switch-toggle">
+          <input
+            type="checkbox"
+            [checked]="config.enabled"
+            (change)="toggleAutomation('SLEEP_WAKE_TRANSITIONS')"
+          />
+          <span class="switch-toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-row-label">
+        <span class="row-title">音量の対象デバイス</span>
+        <span>音量変更を適用する再生デバイスです。現在: {{ getAudioDeviceLabel() }}</span>
+      </div>
+      <div class="setting-row-action">
+        <button class="btn btn-secondary" (click)="pickAudioDevice()">デバイス選択</button>
+      </div>
+    </div>
+
+    <div class="setting-row-group">
+      <div class="setting-row">
+        <div class="setting-row-label">
+          <span class="row-title">入眠誘導の開始時刻</span>
+          <span>指定した時刻になると、入眠誘導プロファイルの段階遷移を開始します。</span>
+        </div>
+        <div class="setting-row-action inline-controls">
+          <input
+            type="time"
+            [ngModel]="config.schedules.sleepStartTime"
+            (ngModelChange)="updateSchedules('sleepStartTime', $event)"
+          />
+          <label class="switch-toggle">
+            <input
+              type="checkbox"
+              [checked]="config.schedules.sleepEnabled"
+              (change)="updateSchedules('sleepEnabled', !config.schedules.sleepEnabled)"
+            />
+            <span class="switch-toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-row-label">
+          <span class="row-title">起床誘導の開始時刻</span>
+          <span>指定した時刻になると、起床誘導プロファイルの段階遷移を開始します。</span>
+        </div>
+        <div class="setting-row-action inline-controls">
+          <input
+            type="time"
+            [ngModel]="config.schedules.wakeStartTime"
+            (ngModelChange)="updateSchedules('wakeStartTime', $event)"
+          />
+          <label class="switch-toggle">
+            <input
+              type="checkbox"
+              [checked]="config.schedules.wakeEnabled"
+              (change)="updateSchedules('wakeEnabled', !config.schedules.wakeEnabled)"
+            />
+            <span class="switch-toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    @for (profile of profiles; track profile) {
+      <div class="setting-row-group profile-group">
+        <div class="setting-row">
+          <div class="setting-row-label">
+            <span class="row-title">{{
+              profile === 'sleep' ? '入眠誘導プロファイル' : '起床誘導プロファイル'
+            }}</span>
+            <span>
+              手動実行時の目標値と、時刻実行時の段階設定をまとめた設定です。
+            </span>
+          </div>
+          <div class="setting-row-action">
+            <label class="switch-toggle">
+              <input
+                type="checkbox"
+                [checked]="config.profiles[profile].enabled"
+                (change)="updateProfile(profile, { enabled: !config.profiles[profile].enabled })"
+              />
+              <span class="switch-toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <div class="section-title">手動ターゲット</div>
+          <div class="section-description">
+            概要画面の手動実行ボタンを押したときに、この目標値まで遷移します。
+          </div>
+          <div class="target-grid">
+            <label class="toggle-label">
+              <input
+                type="checkbox"
+                [ngModel]="config.profiles[profile].manualTarget.changeBrightness"
+                (ngModelChange)="updateTarget(profile, 'changeBrightness', $event)"
+              />
+              明度を変更する
+            </label>
+            <label class="field-with-help">
+              <span class="field-label">簡易明度 (%)</span>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                [ngModel]="config.profiles[profile].manualTarget.brightness"
+                (ngModelChange)="updateTarget(profile, 'brightness', $event)"
+              />
+              <span class="field-help">簡易明度モード時に使う全体の明るさです。</span>
+            </label>
+            <label class="field-with-help">
+              <span class="field-label">ソフトウェア明度 (%)</span>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                [ngModel]="config.profiles[profile].manualTarget.softwareBrightness"
+                (ngModelChange)="updateTarget(profile, 'softwareBrightness', $event)"
+              />
+              <span class="field-help">映像側の明るさ補正です。高度な明度モードで使われます。</span>
+            </label>
+            <label class="field-with-help">
+              <span class="field-label">ハードウェア明度 (%)</span>
+              <input
+                type="number"
+                min="0"
+                max="160"
+                [ngModel]="config.profiles[profile].manualTarget.hardwareBrightness"
+                (ngModelChange)="updateTarget(profile, 'hardwareBrightness', $event)"
+              />
+              <span class="field-help">HMD の物理的な明るさです。対応機種でのみ有効です。</span>
+            </label>
+
+            <label class="toggle-label">
+              <input
+                type="checkbox"
+                [ngModel]="config.profiles[profile].manualTarget.changeColorTemperature"
+                (ngModelChange)="updateTarget(profile, 'changeColorTemperature', $event)"
+              />
+              色温度を変更する
+            </label>
+            <label class="field-with-help">
+              <span class="field-label">色温度 (K)</span>
+              <input
+                type="number"
+                min="1000"
+                max="10000"
+                [ngModel]="config.profiles[profile].manualTarget.colorTemperature"
+                (ngModelChange)="updateTarget(profile, 'colorTemperature', $event)"
+              />
+              <span class="field-help">低いほど暖色、高いほど白色寄りになります。</span>
+            </label>
+
+            <label class="toggle-label">
+              <input
+                type="checkbox"
+                [ngModel]="config.profiles[profile].manualTarget.changeVolume"
+                (ngModelChange)="updateTarget(profile, 'changeVolume', $event)"
+              />
+              音量を変更する
+            </label>
+            <label class="field-with-help">
+              <span class="field-label">音量 (%)</span>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                [ngModel]="config.profiles[profile].manualTarget.volume"
+                (ngModelChange)="updateTarget(profile, 'volume', $event)"
+              />
+              <span class="field-help">選択した再生デバイスに適用される音量です。</span>
+            </label>
+            <label class="field-with-help transition-time">
+              <span class="field-label">遷移時間 (秒)</span>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                [ngModel]="msToSeconds(config.profiles[profile].manualTarget.transitionTimeMs)"
+                (ngModelChange)="updateTargetTransitionSeconds(profile, $event)"
+              />
+              <span class="field-help">目標値に達するまでの時間です。10 = 10秒です。</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <div class="section-title">段階遷移ステップ</div>
+          <div class="section-description">
+            指定時刻から順番に適用される設定です。複数の線形変化をつないで、徐々に環境を変えるために複数ステップを使います。
+            各ステップは「開始から何分後に」「何ミリ秒かけて」遷移するかを持ちます。
+          </div>
+          <div class="step-list">
+            @for (step of config.profiles[profile].steps; track step.id) {
+              <div class="step-card">
+                <div class="step-header">
+                  <span>{{ step.id }}</span>
+                  <button class="btn btn-tertiary" (click)="removeStep(profile, step.id)">
+                    削除
+                  </button>
+                </div>
+                <div class="step-grid">
+                  <label class="field-with-help">
+                    <span class="field-label">開始からの経過時間 (分)</span>
+                    <input
+                      type="number"
+                      min="0"
+                      [ngModel]="step.offsetMinutes"
+                      (ngModelChange)="updateStep(profile, step.id, 'offsetMinutes', $event)"
+                    />
+                    <span class="field-help">0 なら開始直後、20 なら開始 20 分後です。</span>
+                  </label>
+                  <label class="field-with-help">
+                    <span class="field-label">遷移時間 (秒)</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      [ngModel]="msToSeconds(step.transitionTimeMs)"
+                      (ngModelChange)="updateStepTransitionSeconds(profile, step.id, $event)"
+                    />
+                    <span class="field-help">このステップの目標値まで到達する時間です。秒で入力します。</span>
+                  </label>
+                  <label class="toggle-label">
+                    <input
+                      type="checkbox"
+                      [ngModel]="step.changeBrightness"
+                      (ngModelChange)="updateStep(profile, step.id, 'changeBrightness', $event)"
+                    />
+                    明度を変更する
+                  </label>
+                  <label class="field-with-help">
+                    <span class="field-label">簡易明度 (%)</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      [ngModel]="step.brightness"
+                      (ngModelChange)="updateStep(profile, step.id, 'brightness', $event)"
+                    />
+                    <span class="field-help">簡易明度モード時の明るさです。</span>
+                  </label>
+                  <label class="field-with-help">
+                    <span class="field-label">ソフトウェア明度 (%)</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      [ngModel]="step.softwareBrightness"
+                      (ngModelChange)="updateStep(profile, step.id, 'softwareBrightness', $event)"
+                    />
+                    <span class="field-help">高度な明度モード時の映像明度です。</span>
+                  </label>
+                  <label class="field-with-help">
+                    <span class="field-label">ハードウェア明度 (%)</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="160"
+                      [ngModel]="step.hardwareBrightness"
+                      (ngModelChange)="updateStep(profile, step.id, 'hardwareBrightness', $event)"
+                    />
+                    <span class="field-help">対応 HMD の物理的な明るさです。</span>
+                  </label>
+                  <label class="toggle-label">
+                    <input
+                      type="checkbox"
+                      [ngModel]="step.changeColorTemperature"
+                      (ngModelChange)="updateStep(profile, step.id, 'changeColorTemperature', $event)"
+                    />
+                    色温度を変更する
+                  </label>
+                  <label class="field-with-help">
+                    <span class="field-label">色温度 (K)</span>
+                    <input
+                      type="number"
+                      min="1000"
+                      max="10000"
+                      [ngModel]="step.colorTemperature"
+                      (ngModelChange)="updateStep(profile, step.id, 'colorTemperature', $event)"
+                    />
+                    <span class="field-help">低いほど暖色、高いほど白色寄りです。</span>
+                  </label>
+                  <label class="toggle-label">
+                    <input
+                      type="checkbox"
+                      [ngModel]="step.changeVolume"
+                      (ngModelChange)="updateStep(profile, step.id, 'changeVolume', $event)"
+                    />
+                    音量を変更する
+                  </label>
+                  <label class="field-with-help">
+                    <span class="field-label">音量 (%)</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      [ngModel]="step.volume"
+                      (ngModelChange)="updateStep(profile, step.id, 'volume', $event)"
+                    />
+                    <span class="field-help">選択した再生デバイスに適用される音量です。</span>
+                  </label>
+                </div>
+              </div>
+            }
+            <button class="btn btn-secondary" (click)="addStep(profile)">ステップを追加</button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
