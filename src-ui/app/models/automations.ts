@@ -131,6 +131,14 @@ export type SleepWakeTransitionProfileType = 'sleep' | 'wake';
 
 export interface SleepWakeTransitionProfile extends AutomationConfig {
   manualTarget: SleepWakeTransitionTarget;
+  // The actual target values are shared between manual and scheduled runs,
+  // but the transition durations are split so quick manual toggles and long
+  // sleep-induction schedules can coexist without duplicating targets in the UI.
+  manualTransitionTimeMs: number;
+  scheduledTransitionTimeMs: number;
+  // Compatibility-only:
+  // step-based transitions were removed from the UX to keep the PoC settings minimal.
+  // The field remains in the model so older saved configs can still be read safely.
   steps: SleepWakeTransitionStep[];
   endBehavior: SleepWakeTransitionEndBehavior;
 }
@@ -587,34 +595,9 @@ export const AUTOMATION_CONFIGS_DEFAULT: AutomationConfigs = {
           volume: 20,
           transitionTimeMs: 10000,
         },
-        steps: [
-          {
-            id: 'sleep-step-1',
-            offsetMinutes: 0,
-            changeBrightness: true,
-            brightness: 60,
-            softwareBrightness: 60,
-            hardwareBrightness: 100,
-            changeColorTemperature: true,
-            colorTemperature: 4000,
-            changeVolume: true,
-            volume: 45,
-            transitionTimeMs: 600000,
-          },
-          {
-            id: 'sleep-step-2',
-            offsetMinutes: 20,
-            changeBrightness: true,
-            brightness: 35,
-            softwareBrightness: 35,
-            hardwareBrightness: 100,
-            changeColorTemperature: true,
-            colorTemperature: 2400,
-            changeVolume: true,
-            volume: 20,
-            transitionTimeMs: 900000,
-          },
-        ],
+        manualTransitionTimeMs: 10000,
+        scheduledTransitionTimeMs: 1800000,
+        steps: [],
         endBehavior: 'NONE',
       },
       wake: {
@@ -626,38 +609,16 @@ export const AUTOMATION_CONFIGS_DEFAULT: AutomationConfigs = {
           hardwareBrightness: 100,
           changeColorTemperature: true,
           colorTemperature: 5600,
-          changeVolume: true,
-          volume: 55,
+          // Compatibility-only:
+          // wake-side volume is restored from the captured pre-sleep baseline.
+          // We keep these fields so older saved configs still deserialize cleanly.
+          changeVolume: false,
+          volume: 100,
           transitionTimeMs: 10000,
         },
-        steps: [
-          {
-            id: 'wake-step-1',
-            offsetMinutes: 0,
-            changeBrightness: true,
-            brightness: 55,
-            softwareBrightness: 55,
-            hardwareBrightness: 100,
-            changeColorTemperature: true,
-            colorTemperature: 3600,
-            changeVolume: true,
-            volume: 35,
-            transitionTimeMs: 600000,
-          },
-          {
-            id: 'wake-step-2',
-            offsetMinutes: 20,
-            changeBrightness: true,
-            brightness: 85,
-            softwareBrightness: 85,
-            hardwareBrightness: 100,
-            changeColorTemperature: true,
-            colorTemperature: 5600,
-            changeVolume: true,
-            volume: 55,
-            transitionTimeMs: 900000,
-          },
-        ],
+        manualTransitionTimeMs: 10000,
+        scheduledTransitionTimeMs: 1800000,
+        steps: [],
         endBehavior: 'NONE',
       },
     },

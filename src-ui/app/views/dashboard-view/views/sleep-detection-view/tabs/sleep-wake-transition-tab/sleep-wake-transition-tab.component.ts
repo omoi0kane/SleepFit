@@ -3,18 +3,17 @@ import { filter } from 'rxjs';
 import {
   AUTOMATION_CONFIGS_DEFAULT,
   SleepWakeTransitionProfileType,
-  SleepWakeTransitionStep,
   SleepWakeTransitionTarget,
   SleepWakeTransitionsConfig,
 } from '../../../../../../models/automations';
+import { AudioDeviceService } from '../../../../../../services/audio-device.service';
+import { SleepWakeTransitionService } from '../../../../../../services/sleep-wake-transition.service';
 import { SleepDetectionTabComponent } from '../sleep-detection-tab.component';
 import {
   AudioDevicePickerComponent,
   AudioDevicePickerInput,
   AudioDevicePickerOutput,
 } from '../../../audio-volume-automations-view/audio-device-picker/audio-device-picker.component';
-import { AudioDeviceService } from '../../../../../../services/audio-device.service';
-import { SleepWakeTransitionService } from '../../../../../../services/sleep-wake-transition.service';
 
 @Component({
   selector: 'app-sleep-wake-transition-tab',
@@ -40,11 +39,15 @@ export class SleepWakeTransitionTabComponent extends SleepDetectionTabComponent 
   }
 
   getAudioDeviceLabel() {
-    if (!this.config.audioDevicePersistentId) return 'Default playback device';
+    if (!this.config.audioDevicePersistentId) return '既定の再生デバイス';
     return (
       this.audioDeviceService.getAudioDeviceNameForPersistentId(this.config.audioDevicePersistentId)
-        ?.display ?? 'Default playback device'
+        ?.display ?? '既定の再生デバイス'
     );
+  }
+
+  isSleepProfile(profile: SleepWakeTransitionProfileType) {
+    return profile === 'sleep';
   }
 
   updateConfig(patch: Partial<SleepWakeTransitionsConfig>) {
@@ -54,7 +57,10 @@ export class SleepWakeTransitionTabComponent extends SleepDetectionTabComponent 
     );
   }
 
-  updateSchedules(field: keyof SleepWakeTransitionsConfig['schedules'], value: boolean | string | null) {
+  updateSchedules(
+    field: keyof SleepWakeTransitionsConfig['schedules'],
+    value: boolean | string | null
+  ) {
     void this.updateConfig({
       schedules: {
         ...this.config.schedules,
@@ -63,7 +69,10 @@ export class SleepWakeTransitionTabComponent extends SleepDetectionTabComponent 
     });
   }
 
-  updateProfile(profile: SleepWakeTransitionProfileType, patch: Partial<SleepWakeTransitionsConfig['profiles'][SleepWakeTransitionProfileType]>) {
+  updateProfile(
+    profile: SleepWakeTransitionProfileType,
+    patch: Partial<SleepWakeTransitionsConfig['profiles'][SleepWakeTransitionProfileType]>
+  ) {
     void this.updateConfig({
       profiles: {
         ...this.config.profiles,
@@ -92,50 +101,30 @@ export class SleepWakeTransitionTabComponent extends SleepDetectionTabComponent 
     this.updateTarget(profile, 'transitionTimeMs', this.secondsToMs(value));
   }
 
-  updateStep(
-    profile: SleepWakeTransitionProfileType,
-    stepId: string,
-    field: keyof SleepWakeTransitionStep,
-    value: string | number | boolean | null
-  ) {
+  updateManualTransitionSeconds(profile: SleepWakeTransitionProfileType, value: number | null) {
     this.updateProfile(profile, {
-      steps: this.config.profiles[profile].steps.map((step) =>
-        step.id === stepId ? ({ ...step, [field]: value } as SleepWakeTransitionStep) : step
-      ),
+      manualTransitionTimeMs: this.secondsToMs(value),
     });
   }
 
-  updateStepTransitionSeconds(
-    profile: SleepWakeTransitionProfileType,
-    stepId: string,
-    value: number | null
-  ) {
-    this.updateStep(profile, stepId, 'transitionTimeMs', this.secondsToMs(value));
-  }
-
-  addStep(profile: SleepWakeTransitionProfileType) {
-    const steps = [...this.config.profiles[profile].steps];
-    const lastOffset = steps.length ? steps[steps.length - 1].offsetMinutes : 0;
-    steps.push({
-      id: `${profile}-${Date.now()}`,
-      offsetMinutes: lastOffset + 15,
-      transitionTimeMs: 600000,
-      changeBrightness: true,
-      brightness: profile === 'sleep' ? 40 : 85,
-      softwareBrightness: profile === 'sleep' ? 40 : 85,
-      hardwareBrightness: profile === 'sleep' ? 40 : 85,
-      changeColorTemperature: true,
-      colorTemperature: profile === 'sleep' ? 2800 : 5000,
-      changeVolume: false,
-      volume: profile === 'sleep' ? 25 : 60,
-    });
-    this.updateProfile(profile, { steps });
-  }
-
-  removeStep(profile: SleepWakeTransitionProfileType, stepId: string) {
+  updateScheduledTransitionSeconds(profile: SleepWakeTransitionProfileType, value: number | null) {
     this.updateProfile(profile, {
-      steps: this.config.profiles[profile].steps.filter((step) => step.id !== stepId),
+      scheduledTransitionTimeMs: this.secondsToMs(value),
     });
+  }
+
+  getManualTransitionSeconds(profile: SleepWakeTransitionProfileType) {
+    return this.msToSeconds(
+      this.config.profiles[profile].manualTransitionTimeMs ??
+        this.config.profiles[profile].manualTarget.transitionTimeMs
+    );
+  }
+
+  getScheduledTransitionSeconds(profile: SleepWakeTransitionProfileType) {
+    return this.msToSeconds(
+      this.config.profiles[profile].scheduledTransitionTimeMs ??
+        this.config.profiles[profile].manualTarget.transitionTimeMs
+    );
   }
 
   pickAudioDevice() {
@@ -166,5 +155,4 @@ export class SleepWakeTransitionTabComponent extends SleepDetectionTabComponent 
   private secondsToMs(value: number | null) {
     return Math.max(0, Math.round((value ?? 0) * 1000));
   }
-
 }

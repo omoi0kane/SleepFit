@@ -4,7 +4,6 @@ import { BehaviorSubject, firstValueFrom, merge } from 'rxjs';
 import {
   AUTOMATION_CONFIGS_DEFAULT,
   SleepWakeTransitionProfileType,
-  SleepWakeTransitionStep,
   SleepWakeTransitionTarget,
   SleepWakeTransitionsConfig,
 } from '../models/automations';
@@ -36,6 +35,11 @@ type TransitionDomainLocks = {
   volume: boolean;
 };
 
+type VolumeBaseline = {
+  deviceId: string;
+  volumePercent: number;
+};
+
 export interface SleepWakeTransitionState {
   status: SleepWakeTransitionStatus;
   profile: SleepWakeTransitionProfileType | null;
@@ -50,7 +54,6 @@ type RunContext = {
   timeoutIds: ReturnType<typeof setTimeout>[];
   volumeTimeoutIds: ReturnType<typeof setTimeout>[];
   domainLocks: TransitionDomainLocks;
-  cancelEndBehavior: boolean;
 };
 
 @Injectable({
@@ -60,16 +63,7 @@ export class SleepWakeTransitionService {
   private config: SleepWakeTransitionsConfig = structuredClone(
     AUTOMATION_CONFIGS_DEFAULT.SLEEP_WAKE_TRANSITIONS
   );
-  private readonly _state = new BehaviorSubject<SleepWakeTransitionState>({
-    status: 'idle',
-    profile: null,
-    appliedDomains: {
-      brightness: false,
-      cct: false,
-      volume: false,
-    },
-    lastTrigger: null,
-  });
+  private readonly _state = new BehaviorSubject<SleepWakeTransitionState>(this.idleState());
   public readonly state = this._state.asObservable();
 
   private currentRun: RunContext | null = null;
@@ -80,6 +74,7 @@ export class SleepWakeTransitionService {
   private readonly _skipNextSleepScheduleActive = new BehaviorSubject<boolean>(false);
   public readonly skipNextSleepScheduleActive = this._skipNextSleepScheduleActive.asObservable();
   private currentAdvancedMode = false;
+  private volumeBaseline: VolumeBaseline | null = null;
 
   constructor(
     private automationConfig: AutomationConfigService,
@@ -149,12 +144,15 @@ export class SleepWakeTransitionService {
   public async applyManualSleepTransition(source: ResearchEventSource) {
     if (!this.config.enabled || !this.config.profiles.sleep.enabled) return;
     await this.cancelCurrentRun('MANUAL_OVERRIDE');
+    this.captureVolumeBaseline();
     this.skipNextSleepSchedule = true;
     this._skipNextSleepScheduleActive.next(true);
-    const appliedDomains = this.toAppliedDomains(this.config.profiles.sleep.manualTarget);
+    const appliedDomains = this.toAppliedDomains('sleep', this.config.profiles.sleep.manualTarget);
     this.logStart('sleep', 'MANUAL', source);
+    const transitionMs = this.getTransitionTimeMs('sleep', 'MANUAL');
     await this.applyTarget(
       this.config.profiles.sleep.manualTarget,
+      transitionMs,
       'service',
       appliedDomains,
       undefined,
@@ -173,7 +171,7 @@ export class SleepWakeTransitionService {
   public async revertManualSleepTransition(source: ResearchEventSource) {
     if (!this.config.enabled || !this.config.profiles.wake.enabled) return;
     await this.cancelCurrentRun('MANUAL_REVERT');
-    const appliedDomains = this.toAppliedDomains(this.config.profiles.wake.manualTarget);
+    const appliedDomains = this.toAppliedDomains('wake', this.config.profiles.wake.manualTarget);
     this.logStart('wake', 'MANUAL', source);
     this._state.next({
       status: 'reverting',
@@ -183,6 +181,7 @@ export class SleepWakeTransitionService {
     });
     await this.applyTarget(
       this.config.profiles.wake.manualTarget,
+      this.getTransitionTimeMs('wake', 'MANUAL'),
       'service',
       appliedDomains,
       undefined,
@@ -199,15 +198,17 @@ export class SleepWakeTransitionService {
   ) {
     if (!this.config.enabled || !this.config.profiles[profile].enabled) return;
     await this.cancelCurrentRun('SYSTEM');
-    const profileConfig = this.config.profiles[profile];
+    if (profile === 'sleep') {
+      this.captureVolumeBaseline();
+    }
+    const target = this.config.profiles[profile].manualTarget;
     const run: RunContext = {
       profile,
       source,
       reason: 'SCHEDULED',
       timeoutIds: [],
       volumeTimeoutIds: [],
-      domainLocks: this.toDomainsFromSteps(profileConfig.steps),
-      cancelEndBehavior: false,
+      domainLocks: this.toAppliedDomains(profile, target),
     };
     this.currentRun = run;
     this._state.next({
@@ -218,22 +219,22 @@ export class SleepWakeTransitionService {
     });
     this.logStart(profile, 'SCHEDULED', source);
 
-    for (const step of profileConfig.steps) {
-      run.timeoutIds.push(
-        setTimeout(() => {
-          void this.applyStep(step, run);
-        }, step.offsetMinutes * 60 * 1000)
-      );
-    }
+    const transitionMs = this.getTransitionTimeMs(profile, 'SCHEDULED');
+    await this.applyTarget(
+      target,
+      transitionMs,
+      'service',
+      run.domainLocks,
+      run,
+      profile,
+      run.reason
+    );
+    if (this.currentRun !== run) return;
 
-    const finishDelay =
-      profileConfig.steps.reduce((max, step) => {
-        return Math.max(max, step.offsetMinutes * 60 * 1000 + step.transitionTimeMs);
-      }, 0) + 100;
     run.timeoutIds.push(
       setTimeout(() => {
         void this.finishScheduledRun(run);
-      }, finishDelay)
+      }, Math.max(100, transitionMs + 100))
     );
   }
 
@@ -255,16 +256,6 @@ export class SleepWakeTransitionService {
     this._state.next(this.idleState());
   }
 
-  private async applyStep(step: SleepWakeTransitionStep, run: RunContext) {
-    if (this.currentRun !== run) return;
-    await this.applyTarget(step, 'service', run.domainLocks, run, run.profile, run.reason);
-    if (this.currentRun !== run) return;
-    this._state.next({
-      ...this._state.value,
-      appliedDomains: { ...run.domainLocks },
-    });
-  }
-
   private async finishScheduledRun(run: RunContext) {
     if (this.currentRun !== run) return;
     this.currentRun = null;
@@ -273,13 +264,13 @@ export class SleepWakeTransitionService {
     // Sleep / wake transitions intentionally stop at the environment change itself.
     // The actual Sleep mode ON/OFF handoff remains owned by the existing sleep detection
     // and enable/disable automations after the user really falls asleep or wakes up.
-    run.cancelEndBehavior = true;
     this._state.next(this.idleState());
     this.logFinish(run.profile, 'SCHEDULED', run.source);
   }
 
   private async applyTarget(
     target: SleepWakeTransitionTarget,
+    transitionMs: number,
     researchSource: ResearchEventSource,
     domainLocks?: TransitionDomainLocks,
     run?: RunContext,
@@ -287,7 +278,6 @@ export class SleepWakeTransitionService {
     reason?: 'MANUAL' | 'SCHEDULED'
   ) {
     const locks = domainLocks ?? this._state.value.appliedDomains;
-    const transitionMs = Math.max(0, target.transitionTimeMs ?? 0);
 
     if (target.changeBrightness && locks.brightness) {
       if (profile && reason) {
@@ -352,11 +342,14 @@ export class SleepWakeTransitionService {
       }
     }
 
-    if (target.changeVolume && locks.volume && target.volume !== null) {
-      if (profile && reason) {
-        this.researchLog.rememberSleepWakeTransitionDomain('volume', profile, reason);
+    if (locks.volume && profile) {
+      const targetVolumePercent = this.resolveVolumeTargetPercent(profile, target);
+      if (targetVolumePercent !== null) {
+        if (reason) {
+          this.researchLog.rememberSleepWakeTransitionDomain('volume', profile, reason);
+        }
+        await this.applyVolumeTarget(targetVolumePercent, transitionMs, researchSource, run);
       }
-      await this.applyVolumeTarget(target.volume, transitionMs, researchSource, run);
     }
   }
 
@@ -390,7 +383,6 @@ export class SleepWakeTransitionService {
     const run = this.currentRun;
     if (run) {
       run.domainLocks[domain] = false;
-      run.cancelEndBehavior = true;
       if (domain === 'brightness') {
         this.simpleBrightness.cancelActiveTransition();
         this.softwareBrightness.cancelActiveTransition();
@@ -449,23 +441,72 @@ export class SleepWakeTransitionService {
     };
   }
 
-  private toAppliedDomains(target: SleepWakeTransitionTarget): TransitionDomainLocks {
+  private toAppliedDomains(
+    profile: SleepWakeTransitionProfileType,
+    target: SleepWakeTransitionTarget
+  ): TransitionDomainLocks {
     return {
       brightness: target.changeBrightness,
       cct: target.changeColorTemperature,
-      volume: target.changeVolume,
+      volume: this.hasActiveVolumeTarget(profile, target),
     };
   }
 
-  private toDomainsFromSteps(steps: SleepWakeTransitionStep[]): TransitionDomainLocks {
-    return steps.reduce<TransitionDomainLocks>(
-      (domains, step) => ({
-        brightness: domains.brightness || step.changeBrightness,
-        cct: domains.cct || step.changeColorTemperature,
-        volume: domains.volume || step.changeVolume,
-      }),
-      { brightness: false, cct: false, volume: false }
-    );
+  private hasActiveVolumeTarget(
+    profile: SleepWakeTransitionProfileType,
+    target: SleepWakeTransitionTarget
+  ) {
+    const device = this.audioDevices.getAudioDeviceForPersistentId(this.config.audioDevicePersistentId);
+    if (!device) return false;
+    if (profile === 'sleep') {
+      return target.changeVolume && target.volume !== null;
+    }
+    return !!this.volumeBaseline && this.volumeBaseline.deviceId === device.id;
+  }
+
+  private captureVolumeBaseline() {
+    const device = this.audioDevices.getAudioDeviceForPersistentId(this.config.audioDevicePersistentId);
+    if (!device) return;
+    // UX note:
+    // wake-side volume is intentionally not user-configurable anymore.
+    // Instead we restore to the volume that was active when the sleep transition started.
+    this.volumeBaseline = {
+      deviceId: device.id,
+      volumePercent: Math.round((device.volume ?? 1) * 100),
+    };
+  }
+
+  private resolveVolumeTargetPercent(
+    profile: SleepWakeTransitionProfileType,
+    target: SleepWakeTransitionTarget
+  ) {
+    const device = this.audioDevices.getAudioDeviceForPersistentId(this.config.audioDevicePersistentId);
+    if (!device) return null;
+
+    if (profile === 'sleep') {
+      if (!target.changeVolume || target.volume === null || !this.volumeBaseline) return null;
+      return Math.max(0, Math.min(100, (this.volumeBaseline.volumePercent * target.volume) / 100));
+    }
+
+    // Compatibility note:
+    // wake manualTarget.volume is still present in the stored model so old configs load cleanly,
+    // but the wake UI and execution intentionally ignore it. Wake restores to the captured
+    // pre-sleep baseline instead of using a separate absolute target.
+    if (!this.volumeBaseline || this.volumeBaseline.deviceId !== device.id) return null;
+    return this.volumeBaseline.volumePercent;
+  }
+
+  private getTransitionTimeMs(
+    profile: SleepWakeTransitionProfileType,
+    reason: 'MANUAL' | 'SCHEDULED'
+  ) {
+    const config = this.config.profiles[profile];
+    const configuredTime =
+      reason === 'MANUAL' ? config.manualTransitionTimeMs : config.scheduledTransitionTimeMs;
+    // Compatibility fallback:
+    // older saved configs only have manualTarget.transitionTimeMs, so we keep
+    // reading it until the user saves the new split-duration fields.
+    return Math.max(0, configuredTime ?? config.manualTarget.transitionTimeMs ?? 0);
   }
 
   private logStart(
