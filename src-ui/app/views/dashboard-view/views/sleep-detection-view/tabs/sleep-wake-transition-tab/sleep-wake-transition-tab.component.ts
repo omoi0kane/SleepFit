@@ -14,6 +14,7 @@ import {
   AudioDevicePickerOutput,
 } from '../../../audio-volume-automations-view/audio-device-picker/audio-device-picker.component';
 import { AudioDeviceService } from '../../../../../../services/audio-device.service';
+import { SleepWakeTransitionService } from '../../../../../../services/sleep-wake-transition.service';
 
 @Component({
   selector: 'app-sleep-wake-transition-tab',
@@ -24,9 +25,14 @@ import { AudioDeviceService } from '../../../../../../services/audio-device.serv
 export class SleepWakeTransitionTabComponent extends SleepDetectionTabComponent {
   protected readonly defaults = AUTOMATION_CONFIGS_DEFAULT.SLEEP_WAKE_TRANSITIONS;
   protected readonly profiles: SleepWakeTransitionProfileType[] = ['sleep', 'wake'];
+  protected readonly skipNextSleepScheduleActive;
 
-  constructor(private audioDeviceService: AudioDeviceService) {
+  constructor(
+    private audioDeviceService: AudioDeviceService,
+    private sleepWakeTransitionService: SleepWakeTransitionService
+  ) {
     super();
+    this.skipNextSleepScheduleActive = this.sleepWakeTransitionService.skipNextSleepScheduleActive;
   }
 
   get config(): SleepWakeTransitionsConfig {
@@ -147,6 +153,10 @@ export class SleepWakeTransitionTabComponent extends SleepDetectionTabComponent 
           audioDevicePersistentId: res.device.persistentId!,
         });
       });
+  }
+
+  clearSkipNextSleepSchedule() {
+    this.sleepWakeTransitionService.clearSkipNextSleepSchedule();
   }
 
   msToSeconds(value: number | null | undefined) {

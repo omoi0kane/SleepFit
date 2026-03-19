@@ -8,6 +8,38 @@
   gap: 0.75em;
 }
 
+// Debug-only helper UI:
+// surfaces the one-shot sleep schedule skip flag so short-interval schedule
+// testing can clear it without changing the underlying skip behavior.
+.debug-skip-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  margin: -0.25em 0 0.75em;
+  padding: 0.85em 1em;
+  border: 1px dashed var(--color-surface-3);
+  border-radius: var(--surface-border-radius);
+  background: color-mix(in srgb, var(--color-surface-1) 70%, var(--color-accent) 8%);
+}
+
+.debug-skip-notice__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+}
+
+.debug-skip-notice__title {
+  font-size: 0.92em;
+  font-weight: 700;
+}
+
+.debug-skip-notice__description {
+  font-size: 0.84em;
+  line-height: 1.4;
+  opacity: 0.78;
+}
+
 .profile-group {
   display: block;
 }

@@ -55,6 +55,20 @@
         </div>
       </div>
 
+      @if (skipNextSleepScheduleActive | async) {
+        <div class="debug-skip-notice">
+          <div class="debug-skip-notice__text">
+            <span class="debug-skip-notice__title">デバッグ用: 次回の入眠自動実行はスキップ予定です</span>
+            <span class="debug-skip-notice__description">
+              手動で入眠誘導を実行したため、直後の重複実行を防ぐ設定が有効です。
+            </span>
+          </div>
+          <button class="btn btn-tertiary" (click)="clearSkipNextSleepSchedule()">
+            スキップを解除
+          </button>
+        </div>
+      }
+
       <div class="setting-row">
         <div class="setting-row-label">
           <span class="row-title">起床誘導の開始時刻</span>

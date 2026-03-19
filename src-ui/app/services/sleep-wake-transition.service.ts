@@ -74,6 +74,11 @@ export class SleepWakeTransitionService {
 
   private currentRun: RunContext | null = null;
   private skipNextSleepSchedule = false;
+  // Debug-only UI support:
+  // expose whether the next scheduled sleep run will be skipped so testers can
+  // intentionally clear it without restarting the app during short schedule tests.
+  private readonly _skipNextSleepScheduleActive = new BehaviorSubject<boolean>(false);
+  public readonly skipNextSleepScheduleActive = this._skipNextSleepScheduleActive.asObservable();
   private currentAdvancedMode = false;
 
   constructor(
@@ -122,16 +127,30 @@ export class SleepWakeTransitionService {
     return this._state.value;
   }
 
+  public get skipNextSleepScheduleSync(): boolean {
+    return this.skipNextSleepSchedule;
+  }
+
   public consumeSkipNextSleepSchedule() {
     const skip = this.skipNextSleepSchedule;
     this.skipNextSleepSchedule = false;
+    this._skipNextSleepScheduleActive.next(false);
     return skip;
+  }
+
+  public clearSkipNextSleepSchedule() {
+    // Debug-only escape hatch:
+    // lets testers cancel the one-shot skip flag so near-future schedule checks
+    // can be repeated without waiting for another manual sleep run.
+    this.skipNextSleepSchedule = false;
+    this._skipNextSleepScheduleActive.next(false);
   }
 
   public async applyManualSleepTransition(source: ResearchEventSource) {
     if (!this.config.enabled || !this.config.profiles.sleep.enabled) return;
     await this.cancelCurrentRun('MANUAL_OVERRIDE');
     this.skipNextSleepSchedule = true;
+    this._skipNextSleepScheduleActive.next(true);
     const appliedDomains = this.toAppliedDomains(this.config.profiles.sleep.manualTarget);
     this.logStart('sleep', 'MANUAL', source);
     await this.applyTarget(
