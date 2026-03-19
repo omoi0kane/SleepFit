@@ -127,6 +127,7 @@ export interface SleepWakeTransitionStep extends SleepWakeTransitionTarget {
 }
 
 export type SleepWakeTransitionEndBehavior = 'NONE' | 'ENABLE_SLEEP_MODE' | 'RUN_SLEEP_PREPARATION';
+export type SleepWakeScheduledCurveMode = 'CLASSIC' | 'EVIDENCE_BASED';
 export type SleepWakeTransitionProfileType = 'sleep' | 'wake';
 
 export interface SleepWakeTransitionProfile extends AutomationConfig {
@@ -140,6 +141,10 @@ export interface SleepWakeTransitionProfile extends AutomationConfig {
   // step-based transitions were removed from the UX to keep the PoC settings minimal.
   // The field remains in the model so older saved configs can still be read safely.
   steps: SleepWakeTransitionStep[];
+  // Currently only scheduled wake uses this switch.
+  // It exists so we can keep the original "classic" behavior available while
+  // iterating on research-driven wake-up curves.
+  scheduledCurveMode: SleepWakeScheduledCurveMode;
   endBehavior: SleepWakeTransitionEndBehavior;
 }
 
@@ -598,6 +603,7 @@ export const AUTOMATION_CONFIGS_DEFAULT: AutomationConfigs = {
         manualTransitionTimeMs: 10000,
         scheduledTransitionTimeMs: 1800000,
         steps: [],
+        scheduledCurveMode: 'CLASSIC',
         endBehavior: 'NONE',
       },
       wake: {
@@ -619,6 +625,7 @@ export const AUTOMATION_CONFIGS_DEFAULT: AutomationConfigs = {
         manualTransitionTimeMs: 10000,
         scheduledTransitionTimeMs: 1800000,
         steps: [],
+        scheduledCurveMode: 'EVIDENCE_BASED',
         endBehavior: 'NONE',
       },
     },

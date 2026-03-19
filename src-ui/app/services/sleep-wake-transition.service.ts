@@ -3,6 +3,7 @@ import { listen } from '@tauri-apps/api/event';
 import { BehaviorSubject, firstValueFrom, merge } from 'rxjs';
 import {
   AUTOMATION_CONFIGS_DEFAULT,
+  SleepWakeScheduledCurveMode,
   SleepWakeTransitionProfileType,
   SleepWakeTransitionTarget,
   SleepWakeTransitionsConfig,
@@ -60,6 +61,9 @@ type RunContext = {
   providedIn: 'root',
 })
 export class SleepWakeTransitionService {
+  private static readonly WAKE_EVIDENCE_VOLUME_DURATION_RATIO = 0.15;
+  private static readonly WAKE_EVIDENCE_MIN_VOLUME_DURATION_MS = 10000;
+
   private config: SleepWakeTransitionsConfig = structuredClone(
     AUTOMATION_CONFIGS_DEFAULT.SLEEP_WAKE_TRANSITIONS
   );
@@ -220,15 +224,19 @@ export class SleepWakeTransitionService {
     this.logStart(profile, 'SCHEDULED', source);
 
     const transitionMs = this.getTransitionTimeMs(profile, 'SCHEDULED');
-    await this.applyTarget(
-      target,
-      transitionMs,
-      'service',
-      run.domainLocks,
-      run,
-      profile,
-      run.reason
-    );
+    if (profile === 'wake' && this.getScheduledCurveMode(profile) === 'EVIDENCE_BASED') {
+      await this.startEvidenceBasedWakeRun(target, transitionMs, run);
+    } else {
+      await this.applyTarget(
+        target,
+        transitionMs,
+        'service',
+        run.domainLocks,
+        run,
+        profile,
+        run.reason
+      );
+    }
     if (this.currentRun !== run) return;
 
     run.timeoutIds.push(
@@ -275,7 +283,8 @@ export class SleepWakeTransitionService {
     domainLocks?: TransitionDomainLocks,
     run?: RunContext,
     profile?: SleepWakeTransitionProfileType,
-    reason?: 'MANUAL' | 'SCHEDULED'
+    reason?: 'MANUAL' | 'SCHEDULED',
+    skipVolume = false
   ) {
     const locks = domainLocks ?? this._state.value.appliedDomains;
 
@@ -342,7 +351,7 @@ export class SleepWakeTransitionService {
       }
     }
 
-    if (locks.volume && profile) {
+    if (!skipVolume && locks.volume && profile) {
       const targetVolumePercent = this.resolveVolumeTargetPercent(profile, target);
       if (targetVolumePercent !== null) {
         if (reason) {
@@ -496,6 +505,49 @@ export class SleepWakeTransitionService {
     return this.volumeBaseline.volumePercent;
   }
 
+  private async startEvidenceBasedWakeRun(
+    target: SleepWakeTransitionTarget,
+    transitionMs: number,
+    run: RunContext
+  ) {
+    // Research-oriented scheduled wake variant:
+    // keep brightness / color temperature on the existing shared path, but delay
+    // the wake volume restoration until the end of the wake window.
+    await this.applyTarget(
+      target,
+      transitionMs,
+      'service',
+      run.domainLocks,
+      run,
+      run.profile,
+      run.reason,
+      true
+    );
+
+    if (!run.domainLocks.volume) return;
+    const targetVolumePercent = this.resolveVolumeTargetPercent(run.profile, target);
+    if (targetVolumePercent === null) return;
+
+    const volumeDurationMs = Math.min(
+      transitionMs,
+      Math.max(
+        SleepWakeTransitionService.WAKE_EVIDENCE_MIN_VOLUME_DURATION_MS,
+        Math.round(
+          transitionMs * SleepWakeTransitionService.WAKE_EVIDENCE_VOLUME_DURATION_RATIO
+        )
+      )
+    );
+    const volumeDelayMs = Math.max(0, transitionMs - volumeDurationMs);
+
+    run.timeoutIds.push(
+      setTimeout(() => {
+        if (this.currentRun !== run || !run.domainLocks.volume) return;
+        this.researchLog.rememberSleepWakeTransitionDomain('volume', run.profile, run.reason);
+        void this.applyVolumeTarget(targetVolumePercent, volumeDurationMs, 'service', run);
+      }, volumeDelayMs)
+    );
+  }
+
   private getTransitionTimeMs(
     profile: SleepWakeTransitionProfileType,
     reason: 'MANUAL' | 'SCHEDULED'
@@ -507,6 +559,10 @@ export class SleepWakeTransitionService {
     // older saved configs only have manualTarget.transitionTimeMs, so we keep
     // reading it until the user saves the new split-duration fields.
     return Math.max(0, configuredTime ?? config.manualTarget.transitionTimeMs ?? 0);
+  }
+
+  private getScheduledCurveMode(profile: SleepWakeTransitionProfileType): SleepWakeScheduledCurveMode {
+    return this.config.profiles[profile].scheduledCurveMode ?? 'CLASSIC';
   }
 
   private logStart(

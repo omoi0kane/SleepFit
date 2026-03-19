@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { filter } from 'rxjs';
 import {
   AUTOMATION_CONFIGS_DEFAULT,
+  SleepWakeScheduledCurveMode,
   SleepWakeTransitionProfileType,
   SleepWakeTransitionTarget,
   SleepWakeTransitionsConfig,
@@ -24,6 +25,7 @@ import {
 export class SleepWakeTransitionTabComponent extends SleepDetectionTabComponent {
   protected readonly defaults = AUTOMATION_CONFIGS_DEFAULT.SLEEP_WAKE_TRANSITIONS;
   protected readonly profiles: SleepWakeTransitionProfileType[] = ['sleep', 'wake'];
+  protected readonly wakeCurveModes: SleepWakeScheduledCurveMode[] = ['CLASSIC', 'EVIDENCE_BASED'];
   protected readonly skipNextSleepScheduleActive;
 
   constructor(
@@ -125,6 +127,16 @@ export class SleepWakeTransitionTabComponent extends SleepDetectionTabComponent 
       this.config.profiles[profile].scheduledTransitionTimeMs ??
         this.config.profiles[profile].manualTarget.transitionTimeMs
     );
+  }
+
+  updateScheduledCurveMode(mode: SleepWakeScheduledCurveMode) {
+    this.updateProfile('wake', {
+      scheduledCurveMode: mode,
+    });
+  }
+
+  getScheduledCurveMode() {
+    return this.config.profiles.wake.scheduledCurveMode ?? 'CLASSIC';
   }
 
   pickAudioDevice() {

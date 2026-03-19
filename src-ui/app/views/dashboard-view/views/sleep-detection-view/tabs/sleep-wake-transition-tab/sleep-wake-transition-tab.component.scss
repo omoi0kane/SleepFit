@@ -102,6 +102,15 @@
   }
 }
 
+.curve-mode-field {
+  max-width: 32rem;
+  margin-bottom: 1rem;
+
+  select {
+    width: 100%;
+  }
+}
+
 .profile-note {
   grid-column: span 2;
   font-size: 0.9em;

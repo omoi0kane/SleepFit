@@ -129,6 +129,26 @@
               : '手動実行や自動実行で適用する目標値です。起床時の音量は個別指定せず、入眠開始前の値へ戻します。' }}
           </div>
 
+          @if (!isSleepProfile(profile)) {
+            <div class="field-with-help curve-mode-field">
+              <span class="field-label">起床誘導カーブ（デバッグ用）</span>
+              <select
+                [ngModel]="getScheduledCurveMode()"
+                (ngModelChange)="updateScheduledCurveMode($event)"
+              >
+                @for (mode of wakeCurveModes; track mode) {
+                  <option [ngValue]="mode">
+                    {{ mode === 'CLASSIC' ? '通常' : 'エビデンスベース' }}
+                  </option>
+                }
+              </select>
+              <span class="field-help">
+                デバッグ用の切替です。時刻指定の起床誘導だけに適用されます。
+                エビデンスベースでは、音量を起床直前の短時間で戻します。将来的には UI から削除する想定です。
+              </span>
+            </div>
+          }
+
           <div class="target-grid">
             <label class="toggle-label">
               <input
