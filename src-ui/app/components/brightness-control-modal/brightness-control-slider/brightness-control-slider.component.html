@@ -5,10 +5,18 @@
   @if (mode === 'CCT') {
     <i class="material-symbols-outlined brightness-level-icon">thermometer_minus</i>
   }
+  @if (mode === 'VOLUME') {
+    <i class="material-symbols-outlined brightness-level-icon icon-filled">volume_down</i>
+  }
   @if (mode === 'FAN_SPEED') {
     <i class="material-symbols-outlined brightness-level-icon icon-filled">mode_fan_off</i>
   }
-  <div class="brightness-slider-bar" (mousedown)="onDragStart($event)" [class.cct]="mode === 'CCT'">
+  <div
+    class="brightness-slider-bar"
+    (mousedown)="onDragStart($event)"
+    [class.cct]="mode === 'CCT'"
+    [class.disabled]="disabled"
+  >
     <div
       class="brightness-slider-bar-inner"
       [class.dragging]="dragging"
@@ -16,7 +24,7 @@
       [style.width]="innerWidth"
     >
       <div class="brightness-slider-bar-label">
-        @if (['BRIGHTNESS', 'FAN_SPEED'].includes(mode)) {
+        @if (['BRIGHTNESS', 'FAN_SPEED', 'VOLUME'].includes(mode)) {
           <span>{{ (dragging ? dragValue : value) | number: '1.0-0' }} %</span>
         }
         @if (['CCT'].includes(mode)) {
@@ -34,6 +42,9 @@
   }
   @if (mode === 'CCT') {
     <i class="material-symbols-outlined brightness-level-icon">thermometer_add</i>
+  }
+  @if (mode === 'VOLUME') {
+    <i class="material-symbols-outlined brightness-level-icon icon-filled">volume_up</i>
   }
   @if (mode === 'FAN_SPEED') {
     <i class="material-symbols-outlined brightness-level-icon icon-filled">mode_fan</i>

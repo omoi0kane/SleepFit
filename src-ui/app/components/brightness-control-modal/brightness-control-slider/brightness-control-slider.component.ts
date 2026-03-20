@@ -27,7 +27,8 @@ export class BrightnessControlSliderComponent implements OnInit, OnChanges {
   @Input() snapValues: number[] = [];
   @Input() snapDistance: number = 1;
   @Input() transitionActive = false;
-  @Input() mode: 'BRIGHTNESS' | 'FAN_SPEED' | 'CCT' = 'BRIGHTNESS';
+  @Input() disabled = false;
+  @Input() mode: 'BRIGHTNESS' | 'FAN_SPEED' | 'CCT' | 'VOLUME' = 'BRIGHTNESS';
   @Output() valueChange = new EventEmitter<number>();
 
   @ViewChild('rangeGuideEl') rangeGuideEl?: ElementRef;
@@ -40,6 +41,7 @@ export class BrightnessControlSliderComponent implements OnInit, OnChanges {
   get startPadding() {
     switch (this.mode) {
       case 'BRIGHTNESS':
+      case 'VOLUME':
         return 0;
       case 'FAN_SPEED':
         return 1;
@@ -50,7 +52,7 @@ export class BrightnessControlSliderComponent implements OnInit, OnChanges {
 
   onDragStart = (event: MouseEvent) => {
     event.stopImmediatePropagation();
-    if (this.dragging) return;
+    if (this.dragging || this.disabled) return;
     this.dragging = true;
     this.onDrag(event);
   };
@@ -64,7 +66,7 @@ export class BrightnessControlSliderComponent implements OnInit, OnChanges {
 
   @HostListener('window:mousemove', ['$event'])
   onDrag = ($event: MouseEvent) => {
-    if (!this.dragging || !this.rangeGuideEl) return;
+    if (!this.dragging || !this.rangeGuideEl || this.disabled) return;
     const barBounds = this.rangeGuideEl!.nativeElement.getBoundingClientRect();
     const startOffset = this.startPadding * 12;
     const progress = clamp(

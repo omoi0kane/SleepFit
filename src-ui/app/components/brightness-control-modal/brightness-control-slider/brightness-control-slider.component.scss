@@ -55,6 +55,12 @@
       --inner-background-color: #ffffff25;
     }
 
+    &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      --inner-background-color: #ffffff12;
+    }
+
     &.cct {
       overflow: hidden;
 

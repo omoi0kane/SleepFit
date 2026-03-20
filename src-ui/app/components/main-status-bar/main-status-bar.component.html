@@ -154,6 +154,36 @@
         <span class="monospace">{{ cctControl.cctStream | async }}K</span>
       </div>
     }
+    <div
+      class="pill volume-control clickable"
+      *ngVar="{ hover: false }; let state"
+      (mouseenter)="state.hover = true"
+      (mouseleave)="state.hover = false"
+      [tooltip]="
+        ((relativeVolumeState | async)?.enabled ?? false)
+          ? '対象オーディオの基準音量に対する割合を調整します'
+          : '音量対象デバイスが未選択です'
+      "
+      [tooltipMode]="'top'"
+      [tooltipMargin]="8"
+      (click)="openAudioVolumeControlModal()"
+      @hshrink
+    >
+      <div class="pill-icon" @hshrink>
+        <i class="material-symbols-outlined icon-filled">volume_up</i>
+      </div>
+      @if (state.hover) {
+        <span @hshrink>音量:&nbsp;</span>
+      }
+      @if ((relativeVolumeState | async)?.enabled ?? false) {
+        <span class="monospace"
+          >{{ (relativeVolumeState | async)?.relativePercent ?? 100 | number: '1.0-0' }}%</span
+        >
+      }
+      @if (!((relativeVolumeState | async)?.enabled ?? false)) {
+        <span class="monospace">--</span>
+      }
+    </div>
     @if ((simpleBrightnessControl.advancedMode | async) === false) {
       <div
         class="pill brightness-simple clickable"

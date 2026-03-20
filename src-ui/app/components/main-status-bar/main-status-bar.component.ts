@@ -24,6 +24,8 @@ import { MqttService } from '../../services/mqtt/mqtt.service';
 import { CCTControlService } from '../../services/cct-control/cct-control.service';
 import { CCTControlModalComponent } from '../cct-control-modal/cct-control-modal.component';
 import { isHolidaysEventActive } from 'src-ui/app/utils/event-utils';
+import { SleepWakeTransitionService } from '../../services/sleep-wake-transition.service';
+import { AudioVolumeControlModalComponent } from '../audio-volume-control-modal/audio-volume-control-modal.component';
 
 @Component({
   selector: 'app-main-status-bar',
@@ -38,10 +40,12 @@ export class MainStatusBarComponent implements OnInit {
   private brightnessControlModalOpen = false;
   private bsbFanSpeedControlModalOpen = false;
   private cctControlModalOpen = false;
+  private audioVolumeControlModalOpen = false;
   protected snowverlayAvailable = isHolidaysEventActive();
   protected snowverlayActive = false;
   protected mqttStatus: 'DISABLED' | 'CONNECTED' | 'DISCONNECTED' | 'ERROR' = 'DISABLED';
   protected cctControlEnabled = false;
+  protected relativeVolumeState = this.sleepWakeTransition.relativeVolumeState;
 
   constructor(
     private sleepService: SleepService,
@@ -61,7 +65,8 @@ export class MainStatusBarComponent implements OnInit {
     protected brightnessCctAutomations: BrightnessCctAutomationService,
     protected pulsoid: PulsoidService,
     protected bigscreenBeyondFanAutomation: BigscreenBeyondFanAutomationService,
-    protected cctControl: CCTControlService
+    protected cctControl: CCTControlService,
+    protected sleepWakeTransition: SleepWakeTransitionService
   ) {}
 
   ngOnInit(): void {
@@ -167,5 +172,19 @@ export class MainStatusBarComponent implements OnInit {
       })
     );
     this.cctControlModalOpen = false;
+  }
+
+  async openAudioVolumeControlModal() {
+    if (this.audioVolumeControlModalOpen) {
+      this.modalService.closeModal('AudioVolumeControlModal');
+      return;
+    }
+    this.audioVolumeControlModalOpen = true;
+    await firstValueFrom(
+      this.modalService.addModal(AudioVolumeControlModalComponent, undefined, {
+        id: 'AudioVolumeControlModal',
+      })
+    );
+    this.audioVolumeControlModalOpen = false;
   }
 }

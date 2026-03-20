@@ -246,6 +246,7 @@ $background-color: var(--color-surface-2);
 .brightness-simple,
 .bsb-fanctl,
 .cct-control,
+.volume-control,
 .heartrate {
   span:not(:last-child) {
     opacity: 0.5;
@@ -315,6 +316,12 @@ $background-color: var(--color-surface-2);
     border-radius: 999999px;
     background: orange;
     margin-right: 0.25em;
+  }
+}
+
+.volume-control {
+  i {
+    opacity: 0.6;
   }
 }
 

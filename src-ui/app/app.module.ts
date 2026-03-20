@@ -122,6 +122,7 @@ import { SimpleBrightnessControlService } from './services/brightness-control/si
 import { DebugSleepDetectionDebuggerComponent } from './components/developer-debug-modal/debug-sleep-detection-debugger/debug-sleep-detection-debugger.component';
 import { BrightnessControlModalComponent } from './components/brightness-control-modal/brightness-control-modal.component';
 import { BrightnessControlSliderComponent } from './components/brightness-control-modal/brightness-control-slider/brightness-control-slider.component';
+import { AudioVolumeControlModalComponent } from './components/audio-volume-control-modal/audio-volume-control-modal.component';
 import { TranslateMessageFormatCompiler } from 'ngx-translate-messageformat-compiler';
 import { ClickOutsideDirective } from './directives/click-outside.directive';
 import { DeepLinkService } from './services/deep-link.service';
@@ -359,6 +360,7 @@ export function createTranslateLoader(http: HttpClient) {
     DebugSleepDetectionDebuggerComponent,
     BrightnessControlModalComponent,
     BrightnessControlSliderComponent,
+    AudioVolumeControlModalComponent,
     ClickOutsideDirective,
     SettingsIntegrationsViewComponent,
     ObfuscatedValueDirective,
