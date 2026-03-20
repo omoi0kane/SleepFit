@@ -62,6 +62,8 @@ type RunContext = {
   timeoutIds: ReturnType<typeof setTimeout>[];
   volumeTimeoutIds: ReturnType<typeof setTimeout>[];
   domainLocks: TransitionDomainLocks;
+  activeState: SleepWakeTransitionState;
+  completionState: SleepWakeTransitionState;
 };
 
 @Injectable({
@@ -202,48 +204,62 @@ export class SleepWakeTransitionService {
     this.skipNextSleepSchedule = true;
     this._skipNextSleepScheduleActive.next(true);
     const appliedDomains = this.toAppliedDomains('sleep', this.config.profiles.sleep.manualTarget);
-    this.logStart('sleep', 'MANUAL', source);
+    const run = this.createRunContext('sleep', source, 'MANUAL', appliedDomains, {
+      status: 'manual_applied',
+      profile: 'sleep',
+      appliedDomains,
+      lastTrigger: 'manual',
+    });
+    this.currentRun = run;
+    this._state.next(run.activeState);
+    this.logStart(run.profile, run.reason, run.source);
     const transitionMs = this.getTransitionTimeMs('sleep', 'MANUAL');
     await this.applyTarget(
       this.config.profiles.sleep.manualTarget,
       transitionMs,
       'service',
       appliedDomains,
-      undefined,
-      'sleep',
-      'MANUAL'
+      run,
+      run.profile,
+      run.reason
     );
-    this._state.next({
-      status: 'manual_applied',
-      profile: 'sleep',
-      appliedDomains,
-      lastTrigger: 'manual',
-    });
-    this.logFinish('sleep', 'MANUAL', source);
+    if (this.currentRun !== run) return;
+    run.timeoutIds.push(
+      setTimeout(() => {
+        void this.finishRun(run);
+      }, Math.max(100, transitionMs + 100))
+    );
   }
 
   public async revertManualSleepTransition(source: ResearchEventSource) {
     if (!this.config.enabled || !this.config.profiles.wake.enabled) return;
     await this.cancelCurrentRun('MANUAL_REVERT');
     const appliedDomains = this.toAppliedDomains('wake', this.config.profiles.wake.manualTarget);
-    this.logStart('wake', 'MANUAL', source);
-    this._state.next({
+    const run = this.createRunContext('wake', source, 'MANUAL', appliedDomains, this.idleState(), {
       status: 'reverting',
       profile: 'wake',
       appliedDomains,
       lastTrigger: 'manual',
     });
+    this.currentRun = run;
+    this._state.next(run.activeState);
+    this.logStart(run.profile, run.reason, run.source);
+    const transitionMs = this.getTransitionTimeMs('wake', 'MANUAL');
     await this.applyTarget(
       this.config.profiles.wake.manualTarget,
-      this.getTransitionTimeMs('wake', 'MANUAL'),
+      transitionMs,
       'service',
       appliedDomains,
-      undefined,
-      'wake',
-      'MANUAL'
+      run,
+      run.profile,
+      run.reason
     );
-    this._state.next(this.idleState());
-    this.logFinish('wake', 'MANUAL', source);
+    if (this.currentRun !== run) return;
+    run.timeoutIds.push(
+      setTimeout(() => {
+        void this.finishRun(run);
+      }, Math.max(100, transitionMs + 100))
+    );
   }
 
   public async startScheduledProfile(
@@ -263,14 +279,16 @@ export class SleepWakeTransitionService {
       timeoutIds: [],
       volumeTimeoutIds: [],
       domainLocks: this.toAppliedDomains(profile, target),
+      activeState: {
+        status: 'scheduled_running',
+        profile,
+        appliedDomains: this.toAppliedDomains(profile, target),
+        lastTrigger: 'scheduled',
+      },
+      completionState: this.idleState(),
     };
     this.currentRun = run;
-    this._state.next({
-      status: 'scheduled_running',
-      profile,
-      appliedDomains: { ...run.domainLocks },
-      lastTrigger: 'scheduled',
-    });
+    this._state.next(run.activeState);
     this.logStart(profile, 'SCHEDULED', source);
 
     const transitionMs = this.getTransitionTimeMs(profile, 'SCHEDULED');
@@ -291,7 +309,7 @@ export class SleepWakeTransitionService {
 
     run.timeoutIds.push(
       setTimeout(() => {
-        void this.finishScheduledRun(run);
+        void this.finishRun(run);
       }, Math.max(100, transitionMs + 100))
     );
   }
@@ -314,7 +332,7 @@ export class SleepWakeTransitionService {
     this._state.next(this.idleState());
   }
 
-  private async finishScheduledRun(run: RunContext) {
+  private async finishRun(run: RunContext) {
     if (this.currentRun !== run) return;
     this.currentRun = null;
     this.clearRunTimers(run);
@@ -322,8 +340,8 @@ export class SleepWakeTransitionService {
     // Sleep / wake transitions intentionally stop at the environment change itself.
     // The actual Sleep mode ON/OFF handoff remains owned by the existing sleep detection
     // and enable/disable automations after the user really falls asleep or wakes up.
-    this._state.next(this.idleState());
-    this.logFinish(run.profile, 'SCHEDULED', run.source);
+    this._state.next(run.completionState);
+    this.logFinish(run.profile, run.reason, run.source);
   }
 
   private async applyTarget(
@@ -451,9 +469,9 @@ export class SleepWakeTransitionService {
       return;
     }
 
-    if (this._state.value.status !== 'manual_applied') return;
-    // Same UX rule for the post-manual-apply state:
-    // any manual change means the user has taken over, so drop the held transition state.
+    if (!['manual_applied', 'reverting'].includes(this._state.value.status)) return;
+    // Safety fallback for any stray manual state that somehow exists without an active run.
+    // In normal operation manual transitions should always have currentRun set now.
     this.cancelTransitions();
     this._state.next(this.idleState());
   }
@@ -478,6 +496,32 @@ export class SleepWakeTransitionService {
       profile: null,
       appliedDomains: { brightness: false, cct: false, volume: false },
       lastTrigger: null,
+    };
+  }
+
+  private createRunContext(
+    profile: SleepWakeTransitionProfileType,
+    source: ResearchEventSource,
+    reason: 'MANUAL' | 'SCHEDULED',
+    domainLocks: TransitionDomainLocks,
+    completionState: SleepWakeTransitionState,
+    activeState?: SleepWakeTransitionState
+  ): RunContext {
+    return {
+      profile,
+      source,
+      reason,
+      timeoutIds: [],
+      volumeTimeoutIds: [],
+      domainLocks,
+      activeState:
+        activeState ?? {
+          status: 'scheduled_running',
+          profile,
+          appliedDomains: { ...domainLocks },
+          lastTrigger: reason === 'MANUAL' ? 'manual' : 'scheduled',
+        },
+      completionState,
     };
   }
 
