@@ -1,0 +1,47 @@
+:host {
+  display: block;
+  padding: 4.25em 1.5em;
+}
+
+.b-modal-container {
+  pointer-events: all;
+  width: 40em;
+  backdrop-filter: blur(4px);
+  border-radius: var(--surface-border-radius);
+  overflow: hidden;
+  border: 0.15em solid var(--color-surface-3);
+  background-color: color-mix(in srgb, var(--color-surface-1) 80%, transparent);
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+}
+
+.sliders-container {
+  padding: 2em 1.5em;
+  flex: 1;
+}
+
+.brightness-slider {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  transition: opacity 0.15s ease;
+
+  &-subtitle {
+    margin-top: 0.5em;
+    text-align: center;
+    font-size: 0.9em;
+    opacity: 0.85;
+
+    &.secondary {
+      margin-top: 0.25em;
+      opacity: 0.6;
+    }
+  }
+
+  &.disabled {
+    opacity: 0.8;
+    pointer-events: none;
+  }
+}

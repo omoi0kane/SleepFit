@@ -10,12 +10,14 @@
 	// State
 	let { state } = ipc;
 	$: brightnessState = $state.brightnessState;
+	$: volumeState = $state.volumeState;
 </script>
 
-<div class="sliders-container" style:height={brightnessState?.advancedMode ? '14em' : '7em'}>
+<div class="sliders-container" style:height={brightnessState?.advancedMode ? '21em' : '14em'}>
 	{#if !!brightnessState}
 		{#if !brightnessState?.advancedMode}
 			<div
+				class="sliders-stack"
 				transition:blurFly={{
 					duration: animationSpeed,
 					y: flyYTransform
@@ -32,9 +34,26 @@
 						trailing: true
 					})}
 				/>
+				class="volume-slider"
+			>
+				<BrightnessSlider
+					label="音量 (基準比)"
+					value={volumeState?.value ?? 100}
+					min={0}
+					max={100}
+					disabled={!volumeState?.enabled}
+					isTransitioning={volumeState?.transitioning ?? false}
+					transitionTarget={volumeState?.transitionTarget ?? 100}
+					onValueChange={throttle((value) => ipc.setRelativeVolume(value), 16, {
+						leading: true,
+						trailing: true
+					})}
+				/>
+				<p class="volume-slider-note">100% = このセッションの基準音量</p>
 			</div>
 		{:else}
 			<div
+				class="sliders-stack"
 				transition:blurFly={{
 					duration: animationSpeed,
 					y: flyYTransform
@@ -64,6 +83,22 @@
 						trailing: true
 					})}
 				/>
+				<div class="volume-slider">
+					<BrightnessSlider
+						label="音量 (基準比)"
+						value={volumeState?.value ?? 100}
+						min={0}
+						max={100}
+						disabled={!volumeState?.enabled}
+						isTransitioning={volumeState?.transitioning ?? false}
+						transitionTarget={volumeState?.transitionTarget ?? 100}
+						onValueChange={throttle((value) => ipc.setRelativeVolume(value), 16, {
+							leading: true,
+							trailing: true
+						})}
+					/>
+					<p class="volume-slider-note">100% = このセッションの基準音量</p>
+				</div>
 			</div>
 		{/if}
 	{/if}
@@ -79,5 +114,18 @@
 			left: 0;
 			width: 100%;
 		}
+	}
+
+	.sliders-stack {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.volume-slider {
+		margin-top: 1rem;
+	}
+
+	.volume-slider-note {
+		@apply mt-2 text-center text-white text-opacity-70 text-lg;
 	}
 </style>

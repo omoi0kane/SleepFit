@@ -179,6 +179,18 @@ class IPCService {
 		});
 	}
 
+	public async setRelativeVolume(value: number): Promise<void> {
+		this.state.update((state) => {
+			state = cloneDeep(state);
+			if (!state.volumeState) return state;
+			state.volumeState.value = value;
+			state.volumeState.transitioning = false;
+			state.volumeState.transitionTarget = value;
+			window.OyasumiIPCOut.sendEventDouble('setRelativeSleepWakeVolume', value);
+			return state;
+		});
+	}
+
 	public async prepareForSleep() {
 		await window.OyasumiIPCOut.sendEventVoid('prepareForSleep');
 	}

@@ -145,6 +145,9 @@ export class SleepWakeTransitionService {
     await listen('revertSleepWakeTransitionManualSleep', async () => {
       await this.revertManualSleepTransition('user_overlay');
     });
+    await listen<number>('setRelativeSleepWakeVolume', async (event) => {
+      await this.setRelativeVolumePercent(event.payload, 'user_overlay');
+    });
   }
 
   public get stateSync(): SleepWakeTransitionState {

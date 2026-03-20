@@ -1,0 +1,28 @@
+<div class="b-modal-container" @fadeUp (clickOutside)="close()">
+  <div class="sliders-container">
+    <div class="brightness-slider" @vshrink [class.disabled]="!((relativeVolumeState | async)?.enabled ?? false)">
+      <app-brightness-control-slider
+        [value]="(relativeVolumeState | async)?.relativePercent ?? 100"
+        [min]="0"
+        [max]="100"
+        [mode]="'VOLUME'"
+        [disabled]="!((relativeVolumeState | async)?.enabled ?? false)"
+        (valueChange)="setRelativeVolume.next($event)"
+      ></app-brightness-control-slider>
+      <div class="brightness-slider-title">
+        <span>音量（基準比）</span>
+      </div>
+      <div class="brightness-slider-subtitle">
+        @if ((relativeVolumeState | async)?.enabled) {
+          <span>100% = このセッションの基準音量</span>
+        }
+        @if (!((relativeVolumeState | async)?.enabled ?? false)) {
+          <span>音量対象デバイスが未選択のため操作できません</span>
+        }
+      </div>
+      <div class="brightness-slider-subtitle secondary">
+        <span>デバイス変更時は、その時点の音量を新しい基準として扱います</span>
+      </div>
+    </div>
+  </div>
+</div>

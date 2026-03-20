@@ -282,7 +282,7 @@
 	</div>
 	<!-- BRIGHTNESS SLIDERS -->
 	<div
-		class="relative w-full h-60"
+		class="relative w-full h-[22rem]"
 		transition:blurFly|global={{
 			duration: animationSpeed,
 			y: flyYTransform,
