@@ -42,6 +42,7 @@ import { SleepPreparationService } from '../sleep-preparation.service';
 import { SystemMicMuteAutomationService } from '../system-mic-mute-automation.service';
 import { CCTControlService } from '../cct-control/cct-control.service';
 import { DeviceManagerService } from '../device-manager.service';
+import { SleepWakeTransitionService } from '../sleep-wake-transition.service';
 
 @Injectable({
   providedIn: 'root',
@@ -123,6 +124,12 @@ export class OverlayStateSyncService {
       transitioning: false,
       transitionTarget: 6600,
     },
+    volumeState: {
+      enabled: false,
+      value: 100,
+      transitioning: false,
+      transitionTarget: 100,
+    },
     sleepPreparationAvailable: false,
     sleepPreparationTimedOut: false,
     systemMicMuted: false,
@@ -142,7 +149,8 @@ export class OverlayStateSyncService {
     private softwareBrightness: SoftwareBrightnessControlService,
     private sleepPreparation: SleepPreparationService,
     private systemMicMuteAutomationService: SystemMicMuteAutomationService,
-    private deviceManager: DeviceManagerService
+    private deviceManager: DeviceManagerService,
+    private sleepWakeTransition: SleepWakeTransitionService
   ) {}
 
   async init() {
@@ -156,6 +164,7 @@ export class OverlayStateSyncService {
     this.updateState_WhenAppSettingsChange();
     this.updateState_WhenBrightnessStateChanges();
     this.updateState_WhenCCTStateChanges();
+    this.updateState_WhenVolumeStateChanges();
     this.updateState_WhenSleepPreparationStateChanges();
     this.updateState_WhenSystemMicMuteStateChanges();
   }
@@ -443,6 +452,19 @@ export class OverlayStateSyncService {
       state.sleepPreparationTimedOut = timedOut;
       this.state.next(state);
     });
+  }
+
+  private updateState_WhenVolumeStateChanges() {
+    this.sleepWakeTransition.relativeVolumeState
+      .pipe(distinctUntilChanged((a, b) => isEqual(a, b)))
+      .subscribe((volumeState) => {
+        const state = structuredClone(this.state.value);
+        state.volumeState!.enabled = volumeState.enabled;
+        state.volumeState!.value = volumeState.relativePercent;
+        state.volumeState!.transitioning = volumeState.transitioning;
+        state.volumeState!.transitionTarget = volumeState.transitionTarget;
+        this.state.next(state);
+      });
   }
 
   private updateState_WhenSystemMicMuteStateChanges() {

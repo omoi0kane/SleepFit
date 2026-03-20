@@ -59,6 +59,7 @@ message OyasumiSidecarState {
   bool sleep_preparation_timed_out = 10;
   bool system_mic_muted = 11;
   OyasumiSidecarCCTState cct_state = 12;
+  OyasumiSidecarVolumeState volume_state = 13;
 }
 
 // No longer required, but reserved for future settings
@@ -170,6 +171,13 @@ message OyasumiSidecarCCTState {
   uint32 max = 4;
   bool transitioning = 5;
   uint32 transition_target = 6;
+}
+
+message OyasumiSidecarVolumeState {
+  bool enabled = 1;
+  double value = 2;
+  bool transitioning = 3;
+  double transition_target = 4;
 }
 
 enum VrcStatus {

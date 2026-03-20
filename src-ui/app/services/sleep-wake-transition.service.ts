@@ -46,6 +46,8 @@ export interface SleepWakeRelativeVolumeState {
   baselineKnown: boolean;
   deviceId: string | null;
   relativePercent: number;
+  transitioning: boolean;
+  transitionTarget: number;
 }
 
 export interface SleepWakeTransitionState {
@@ -93,6 +95,8 @@ export class SleepWakeTransitionService {
     baselineKnown: false,
     deviceId: null,
     relativePercent: 100,
+    transitioning: false,
+    transitionTarget: 100,
   });
   public readonly relativeVolumeState = this._relativeVolumeState.asObservable();
 
@@ -193,6 +197,8 @@ export class SleepWakeTransitionService {
       baselineKnown: true,
       deviceId: device.id,
       relativePercent: clampedRelativePercent,
+      transitioning: false,
+      transitionTarget: clampedRelativePercent,
     });
     await this.audioDevices.setVolume(device.id, targetVolumePercent / 100, source);
   }
@@ -328,6 +334,7 @@ export class SleepWakeTransitionService {
       appliedDomains: { ...run.domainLocks },
       lastTrigger: run.reason === 'MANUAL' ? 'manual' : 'scheduled',
     });
+    this.setVolumeTransitionState(false);
     this.logCancel(run.profile, reason, run.source);
     this._state.next(this.idleState());
   }
@@ -340,6 +347,7 @@ export class SleepWakeTransitionService {
     // Sleep / wake transitions intentionally stop at the environment change itself.
     // The actual Sleep mode ON/OFF handoff remains owned by the existing sleep detection
     // and enable/disable automations after the user really falls asleep or wakes up.
+    this.setVolumeTransitionState(false);
     this._state.next(run.completionState);
     this.logFinish(run.profile, run.reason, run.source);
   }
@@ -440,6 +448,7 @@ export class SleepWakeTransitionService {
     if (!device) return;
     if (!transitionMs) {
       this.updateRelativeVolumePercentForActual(device.id, volumePercent);
+      this.setVolumeTransitionState(false, this.getRelativePercentForActual(device.id, volumePercent));
       await this.audioDevices.setVolume(device.id, volumePercent / 100, source);
       return;
     }
@@ -447,6 +456,8 @@ export class SleepWakeTransitionService {
     const stepCount = Math.max(1, Math.min(20, Math.floor(transitionMs / 500)));
     const stepDelay = transitionMs / stepCount;
     const timeoutIds = run?.volumeTimeoutIds ?? [];
+    const targetRelativePercent = this.getRelativePercentForActual(device.id, volumePercent);
+    this.setVolumeTransitionState(true, targetRelativePercent);
     for (let i = 1; i <= stepCount; i++) {
       const nextVolume = startVolume + ((volumePercent - startVolume) * i) / stepCount;
       timeoutIds.push(
@@ -456,6 +467,11 @@ export class SleepWakeTransitionService {
         }, Math.round(stepDelay * i))
       );
     }
+    timeoutIds.push(
+      setTimeout(() => {
+        this.setVolumeTransitionState(false, targetRelativePercent);
+      }, Math.max(100, transitionMs + 25))
+    );
   }
 
   private onManualDomainIntervention(domain: keyof TransitionDomainLocks) {
@@ -473,6 +489,7 @@ export class SleepWakeTransitionService {
     // Safety fallback for any stray manual state that somehow exists without an active run.
     // In normal operation manual transitions should always have currentRun set now.
     this.cancelTransitions();
+    this.setVolumeTransitionState(false);
     this._state.next(this.idleState());
   }
 
@@ -565,6 +582,8 @@ export class SleepWakeTransitionService {
       baselineKnown: true,
       deviceId: device.id,
       relativePercent: 100,
+      transitioning: false,
+      transitionTarget: 100,
     });
   }
 
@@ -652,6 +671,8 @@ export class SleepWakeTransitionService {
         baselineKnown: false,
         deviceId: null,
         relativePercent: 100,
+        transitioning: false,
+        transitionTarget: 100,
       });
       this.volumeBaseline = null;
       return;
@@ -672,6 +693,8 @@ export class SleepWakeTransitionService {
       baselineKnown: !!baseline,
       deviceId: device.id,
       relativePercent,
+      transitioning: this._relativeVolumeState.value.transitioning,
+      transitionTarget: this._relativeVolumeState.value.transitionTarget,
     });
   }
 
@@ -704,6 +727,23 @@ export class SleepWakeTransitionService {
         0,
         Math.min(100, Math.round((actualVolumePercent * 100) / baseline.volumePercent))
       ),
+      transitioning: this._relativeVolumeState.value.transitioning,
+      transitionTarget: this._relativeVolumeState.value.transitionTarget,
+    });
+  }
+
+  private getRelativePercentForActual(deviceId: string, actualVolumePercent: number) {
+    const baseline = this.getOrCreateVolumeBaseline(deviceId);
+    if (!baseline || baseline.volumePercent <= 0) return 100;
+    return Math.max(0, Math.min(100, Math.round((actualVolumePercent * 100) / baseline.volumePercent)));
+  }
+
+  private setVolumeTransitionState(transitioning: boolean, transitionTarget?: number) {
+    const currentState = this._relativeVolumeState.value;
+    this._relativeVolumeState.next({
+      ...currentState,
+      transitioning,
+      transitionTarget: transitionTarget ?? currentState.transitionTarget,
     });
   }
 

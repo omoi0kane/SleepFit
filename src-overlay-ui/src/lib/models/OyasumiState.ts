@@ -64,6 +64,12 @@ export const DEFAULT_OYASUMI_STATE: OyasumiSidecarState = {
 		transitioning: false,
 		transitionTarget: 6600
 	},
+	volumeState: {
+		enabled: false,
+		value: 100,
+		transitioning: false,
+		transitionTarget: 100
+	},
 	sleepPreparationAvailable: false,
 	sleepPreparationTimedOut: false,
 	systemMicMuted: false
