@@ -9,6 +9,7 @@ mod gesture_detector;
 mod models;
 mod sleep_detector;
 mod supersampling;
+mod wake_overlay;
 
 use crate::{
     globals::STEAM_APP_KEY,
@@ -86,10 +87,16 @@ pub async fn task() {
                 // Set the context on the module state
                 *OVR_CONTEXT.lock().await = ctx.clone();
                 // Initialize submodules
-                if brightness_overlay::on_ovr_init(&ctx.unwrap())
+                if brightness_overlay::on_ovr_init(ctx.as_ref().unwrap())
                     .await
                     .is_err()
                 {
+                    *OVR_CONTEXT.lock().await = None;
+                    continue;
+                }
+                if wake_overlay::on_ovr_init(ctx.as_ref().unwrap()).await.is_err() {
+                    brightness_overlay::on_ovr_quit().await;
+                    wake_overlay::on_ovr_quit().await;
                     *OVR_CONTEXT.lock().await = None;
                     continue;
                 }
@@ -280,6 +287,7 @@ pub async fn task() {
                 drop(ctx);
                 // Shutdown modules
                 brightness_overlay::on_ovr_quit().await;
+                wake_overlay::on_ovr_quit().await;
                 // Shutdown OpenVR
                 unsafe {
                     ovr::sys::VR_Shutdown();

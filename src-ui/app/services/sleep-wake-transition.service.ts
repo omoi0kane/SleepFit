@@ -22,6 +22,7 @@ import { ResearchEventSource } from '../models/research-log';
 import { ResearchLogService } from './research-log.service';
 import { SimpleBrightnessControlService } from './brightness-control/simple-brightness-control.service';
 import { SoftwareBrightnessControlService } from './brightness-control/software-brightness-control.service';
+import { WakeOverlayService } from './overlay/wake-overlay.service';
 
 export type SleepWakeTransitionStatus =
   | 'idle'
@@ -108,7 +109,8 @@ export class SleepWakeTransitionService {
     private cctControl: CCTControlService,
     private audioDevices: AudioDeviceService,
     private eventLog: EventLogService,
-    private researchLog: ResearchLogService
+    private researchLog: ResearchLogService,
+    private wakeOverlay: WakeOverlayService
   ) {}
 
   async init() {
@@ -208,6 +210,7 @@ export class SleepWakeTransitionService {
 
   public async applyManualSleepTransition(source: ResearchEventSource) {
     if (!this.config.enabled || !this.config.profiles.sleep.enabled) return;
+    await this.fadeOutWakeOverlayIfActive();
     await this.cancelCurrentRun('MANUAL_OVERRIDE');
     this.captureVolumeBaseline();
     this.skipNextSleepSchedule = true;
@@ -276,6 +279,9 @@ export class SleepWakeTransitionService {
     source: ResearchEventSource = 'automation'
   ) {
     if (!this.config.enabled || !this.config.profiles[profile].enabled) return;
+    if (profile === 'sleep') {
+      await this.fadeOutWakeOverlayIfActive();
+    }
     await this.cancelCurrentRun('SYSTEM');
     if (profile === 'sleep') {
       this.captureVolumeBaseline();
@@ -301,6 +307,9 @@ export class SleepWakeTransitionService {
     this.logStart(profile, 'SCHEDULED', source);
 
     const transitionMs = this.getTransitionTimeMs(profile, 'SCHEDULED');
+    if (profile === 'wake') {
+      await this.wakeOverlay.startScheduledWake(transitionMs);
+    }
     if (profile === 'wake' && this.getScheduledCurveMode(profile) === 'EVIDENCE_BASED') {
       await this.startEvidenceBasedWakeRun(target, transitionMs, run);
     } else {
@@ -480,6 +489,9 @@ export class SleepWakeTransitionService {
   private onManualDomainIntervention(domain: keyof TransitionDomainLocks) {
     const run = this.currentRun;
     if (run) {
+      if (run.profile === 'wake' && run.reason === 'SCHEDULED') {
+        void this.wakeOverlay.fadeOutGracefully();
+      }
       // UX decision:
       // once the user manually intervenes in any wake/sleep transition domain,
       // stop the entire transition run instead of only disabling that single domain.
@@ -501,6 +513,10 @@ export class SleepWakeTransitionService {
     this.softwareBrightness.cancelActiveTransition();
     this.hardwareBrightness.cancelActiveTransition();
     this.cctControl.cancelActiveTransition();
+  }
+
+  private async fadeOutWakeOverlayIfActive() {
+    await this.wakeOverlay.fadeOutGracefully();
   }
 
   private clearRunTimers(run: RunContext) {

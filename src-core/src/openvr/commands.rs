@@ -101,6 +101,12 @@ pub async fn openvr_set_image_brightness(
 
 #[tauri::command]
 #[oyasumivr_macros::command_profiling]
+pub async fn openvr_set_wake_overlay_opacity(opacity: f64) {
+    super::wake_overlay::set_opacity(opacity).await;
+}
+
+#[tauri::command]
+#[oyasumivr_macros::command_profiling]
 pub async fn openvr_launch_binding_configuration(show_on_desktop: bool) {
     let context = OVR_CONTEXT.lock().await;
     let mut input = match context.as_ref() {
