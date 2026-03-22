@@ -1,1 +1,199 @@
-<button (click)="test()">Test</button>
+<div class="misc-testing">
+  <div class="debug-section">
+    <h3>Misc Test</h3>
+    <button (click)="test()">Steam Test</button>
+  </div>
+
+  <div class="debug-section">
+    <div class="debug-section__header">
+      <div>
+        <h3>Wake Overlay Debug</h3>
+        <p>Temporary in-session tuning for the wake overlay profile.</p>
+      </div>
+      <div class="debug-actions">
+        <button (click)="toggleWakeOverlayPreview()">
+          {{ (wakeOverlayPreviewVisible | async) ? 'Hide Preview' : 'Show Preview' }}
+        </button>
+        <button (click)="resetWakeOverlayConfig()">Reset Defaults</button>
+      </div>
+    </div>
+
+    @if (wakeOverlayConfig | async; as config) {
+      <div class="debug-grid">
+        <label class="debug-field">
+          <span>HMD Profile</span>
+          <input type="text" [value]="config.hmdProfile" readonly />
+        </label>
+
+        <label class="debug-field">
+          <span>Axis Scale X</span>
+          <input
+            type="number"
+            [value]="config.axisScaleX"
+            step="0.05"
+            min="0.1"
+            max="4"
+            (input)="setNumberField('axisScaleX', axisScaleXInput.value, config.axisScaleX)"
+            #axisScaleXInput
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Axis Scale Y</span>
+          <input
+            type="number"
+            [value]="config.axisScaleY"
+            step="0.05"
+            min="0.1"
+            max="4"
+            (input)="setNumberField('axisScaleY', axisScaleYInput.value, config.axisScaleY)"
+            #axisScaleYInput
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Inner Radius</span>
+          <input
+            type="number"
+            [value]="config.innerRadius"
+            step="0.01"
+            min="0"
+            max="2"
+            (input)="setNumberField('innerRadius', innerRadiusInput.value, config.innerRadius)"
+            #innerRadiusInput
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Outer Radius</span>
+          <input
+            type="number"
+            [value]="config.outerRadius"
+            step="0.01"
+            min="0"
+            max="2"
+            (input)="setNumberField('outerRadius', outerRadiusInput.value, config.outerRadius)"
+            #outerRadiusInput
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Max Opacity</span>
+          <input
+            type="number"
+            [value]="config.maxOpacity"
+            step="0.01"
+            min="0"
+            max="1"
+            (input)="setNumberField('maxOpacity', maxOpacityInput.value, config.maxOpacity)"
+            #maxOpacityInput
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Base Opacity</span>
+          <input
+            type="number"
+            [value]="config.baseOpacity"
+            step="0.01"
+            min="0"
+            max="1"
+            (input)="setNumberField('baseOpacity', baseOpacityInput.value, config.baseOpacity)"
+            #baseOpacityInput
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Accent Opacity</span>
+          <input
+            type="number"
+            [value]="config.accentOpacity"
+            step="0.01"
+            min="0"
+            max="1"
+            (input)="setNumberField('accentOpacity', accentOpacityInput.value, config.accentOpacity)"
+            #accentOpacityInput
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Shape</span>
+          <input
+            type="number"
+            [value]="config.shape"
+            step="0.05"
+            min="0.1"
+            max="8"
+            (input)="setNumberField('shape', shapeInput.value, config.shape)"
+            #shapeInput
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Accent Shape</span>
+          <input
+            type="number"
+            [value]="config.accentShape"
+            step="0.05"
+            min="0.1"
+            max="8"
+            (input)="setNumberField('accentShape', accentShapeInput.value, config.accentShape)"
+            #accentShapeInput
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Center Floor</span>
+          <input
+            type="number"
+            [value]="config.centerFloor"
+            step="0.01"
+            min="0"
+            max="1"
+            (input)="setNumberField('centerFloor', centerFloorInput.value, config.centerFloor)"
+            #centerFloorInput
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Color R</span>
+          <input
+            type="number"
+            [value]="config.colorR"
+            step="1"
+            min="0"
+            max="255"
+            (input)="setNumberField('colorR', colorRInput.value, config.colorR)"
+            #colorRInput
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Color G</span>
+          <input
+            type="number"
+            [value]="config.colorG"
+            step="1"
+            min="0"
+            max="255"
+            (input)="setNumberField('colorG', colorGInput.value, config.colorG)"
+            #colorGInput
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Color B</span>
+          <input
+            type="number"
+            [value]="config.colorB"
+            step="1"
+            min="0"
+            max="255"
+            (input)="setNumberField('colorB', colorBInput.value, config.colorB)"
+            #colorBInput
+          />
+        </label>
+      </div>
+    }
+  </div>
+</div>
