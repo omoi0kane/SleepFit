@@ -113,6 +113,13 @@ pub async fn openvr_set_wake_overlay_config(config: super::wake_overlay::WakeOve
 
 #[tauri::command]
 #[oyasumivr_macros::command_profiling]
+pub async fn openvr_capture_environment_luminance(
+) -> super::mirror_luminance_capture::EnvironmentLuminanceObservation {
+    super::mirror_luminance_capture::capture_environment_luminance().await
+}
+
+#[tauri::command]
+#[oyasumivr_macros::command_profiling]
 pub async fn openvr_launch_binding_configuration(show_on_desktop: bool) {
     let context = OVR_CONTEXT.lock().await;
     let mut input = match context.as_ref() {

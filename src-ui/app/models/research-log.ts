@@ -1,4 +1,7 @@
 export type ResearchEventType =
+  | 'environment_luminance_observed'
+  | 'environment_luminance_unavailable'
+  | 'environment_luminance_stalled'
   | 'sleep_wake_transition_started'
   | 'sleep_wake_transition_finished'
   | 'sleep_wake_transition_cancelled'
@@ -31,6 +34,7 @@ export type ResearchEventSource =
   | 'unknown';
 
 export type ResearchDomain =
+  | 'environment_luminance'
   | 'sleep_mode'
   | 'sleep_preparation'
   | 'brightness'

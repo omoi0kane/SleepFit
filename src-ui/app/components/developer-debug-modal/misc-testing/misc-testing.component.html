@@ -200,8 +200,118 @@
   <div class="debug-section">
     <div class="debug-section__header">
       <div>
+        <h3>Environment Observation Debug</h3>
+        <p>v1b captures SteamVR mirror luminance through OpenVR/D3D11. This is not wired into the control loop yet.</p>
+      </div>
+      <div class="debug-actions">
+        <button (click)="captureEnvironmentLuminance()">Capture Once</button>
+        <button (click)="toggleEnvironmentObservationPolling()">
+          {{ (environmentObservationState | async)?.polling ? 'Stop Polling' : 'Start Polling' }}
+        </button>
+      </div>
+    </div>
+
+    @if (environmentObservationState | async; as environmentState) {
+      <div class="debug-grid">
+        <label class="debug-field">
+          <span>Polling</span>
+          <input type="text" [value]="environmentState.polling ? 'Running' : 'Stopped'" readonly />
+        </label>
+
+        <label class="debug-field">
+          <span>Last Updated</span>
+          <input
+            type="text"
+            [value]="environmentState.lastUpdatedAt ? (environmentState.lastUpdatedAt | date: 'HH:mm:ss') : '-'" readonly
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Capture Available</span>
+          <input
+            type="text"
+            [value]="environmentState.observation?.available ? 'Yes' : 'No'"
+            readonly
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Reliable</span>
+          <input
+            type="text"
+            [value]="environmentState.observation?.reliable ? 'Yes' : 'No'"
+            readonly
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Source</span>
+          <input type="text" [value]="environmentState.observation?.source ?? '-'" readonly />
+        </label>
+
+        <label class="debug-field">
+          <span>Capture Size</span>
+          <input
+            type="text"
+            [value]="environmentState.observation ? environmentState.observation.captureWidth + 'x' + environmentState.observation.captureHeight : '-'"
+            readonly
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Observed Luminance</span>
+          <input
+            type="text"
+            [value]="environmentState.observation?.observedLuminance | number: '1.3-3'"
+            readonly
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Trimmed Mean</span>
+          <input
+            type="text"
+            [value]="environmentState.observation?.trimmedMeanLuminance | number: '1.3-3'"
+            readonly
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Variance</span>
+          <input
+            type="text"
+            [value]="environmentState.observation?.luminanceVariance | number: '1.4-4'"
+            readonly
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Highlight Ratio</span>
+          <input
+            type="text"
+            [value]="environmentState.observation?.highlightRatio | number: '1.3-3'"
+            readonly
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Sample Count</span>
+          <input type="text" [value]="environmentState.observation?.sampleCount ?? '-'" readonly />
+        </label>
+
+        <label class="debug-field">
+          <span>Error</span>
+          <input type="text" [value]="environmentState.observation?.error ?? '-'" readonly />
+        </label>
+      </div>
+    }
+  </div>
+
+  <div class="debug-section">
+    <div class="debug-section__header">
+      <div>
         <h3>Sleep Induction Adaptation Debug</h3>
-        <p>v1a uses simulated environment luminance so we can validate the control loop first.</p>
+        <p>v1a/v1b still uses simulated environment luminance for the control loop. Real observation is shown above.</p>
       </div>
     </div>
 

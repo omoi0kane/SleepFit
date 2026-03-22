@@ -244,6 +244,62 @@ export class ResearchLogService {
     this.logEvent('overlay_opened', source, payload);
   }
 
+  logEnvironmentLuminanceObserved(
+    source: ResearchEventSource,
+    payload: {
+      available: boolean;
+      reliable: boolean;
+      observed_luminance: number;
+      trimmed_mean_luminance: number;
+      luminance_variance: number;
+      highlight_ratio: number;
+      sample_count: number;
+      capture_width: number;
+      capture_height: number;
+      source_detail: string;
+      trigger: 'manual' | 'polling';
+      stalled: boolean;
+    }
+  ) {
+    if (!this.shouldRecordHighFrequency(`environment_luminance:observed:${payload.trigger}`)) return;
+    this.logEvent('environment_luminance_observed', source, payload);
+  }
+
+  logEnvironmentLuminanceUnavailable(
+    source: ResearchEventSource,
+    payload: {
+      error: string | null;
+      source_detail: string;
+      trigger: 'manual' | 'polling';
+    }
+  ) {
+    if (
+      !this.shouldRecordHighFrequency(
+        `environment_luminance:unavailable:${payload.trigger}:${payload.error ?? 'unknown'}`
+      )
+    ) {
+      return;
+    }
+    this.logEvent('environment_luminance_unavailable', source, payload);
+  }
+
+  logEnvironmentLuminanceStalled(
+    source: ResearchEventSource,
+    payload: {
+      observed_luminance: number;
+      trimmed_mean_luminance: number;
+      luminance_variance: number;
+      highlight_ratio: number;
+      stalled_for_ms: number;
+      consecutive_similar_samples: number;
+      source_detail: string;
+      trigger: 'polling';
+    }
+  ) {
+    if (!this.shouldRecordHighFrequency('environment_luminance:stalled')) return;
+    this.logEvent('environment_luminance_stalled', source, payload);
+  }
+
   logAutomationFired(
     automationId: string,
     payload: {

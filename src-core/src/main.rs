@@ -343,6 +343,7 @@ fn configure_command_handlers() -> impl Fn(tauri::ipc::Invoke) -> bool {
         openvr::commands::openvr_set_image_brightness,
         openvr::commands::openvr_set_wake_overlay_opacity,
         openvr::commands::openvr_set_wake_overlay_config,
+        openvr::commands::openvr_capture_environment_luminance,
         openvr::commands::openvr_launch_binding_configuration,
         openvr::commands::openvr_get_binding_origins,
         openvr::commands::openvr_is_dashboard_visible,

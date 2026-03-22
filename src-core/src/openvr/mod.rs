@@ -7,6 +7,7 @@ mod devices;
 mod framelimiter;
 mod gesture_detector;
 mod models;
+mod mirror_luminance_capture;
 mod sleep_detector;
 mod supersampling;
 mod wake_overlay;
@@ -94,8 +95,10 @@ pub async fn task() {
                     *OVR_CONTEXT.lock().await = None;
                     continue;
                 }
+                mirror_luminance_capture::on_ovr_init().await;
                 if wake_overlay::on_ovr_init(ctx.as_ref().unwrap()).await.is_err() {
                     brightness_overlay::on_ovr_quit().await;
+                    mirror_luminance_capture::on_ovr_quit().await;
                     wake_overlay::on_ovr_quit().await;
                     *OVR_CONTEXT.lock().await = None;
                     continue;
@@ -266,6 +269,8 @@ pub async fn task() {
                     update_status(OpenVRStatus::Inactive).await;
                     // Shutdown modules
                     brightness_overlay::on_ovr_quit().await;
+                    mirror_luminance_capture::on_ovr_quit().await;
+                    wake_overlay::on_ovr_quit().await;
                     // Shutdown OpenVR
                     unsafe {
                         ovr::sys::VR_Shutdown();
@@ -287,6 +292,7 @@ pub async fn task() {
                 drop(ctx);
                 // Shutdown modules
                 brightness_overlay::on_ovr_quit().await;
+                mirror_luminance_capture::on_ovr_quit().await;
                 wake_overlay::on_ovr_quit().await;
                 // Shutdown OpenVR
                 unsafe {

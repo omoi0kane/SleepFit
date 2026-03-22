@@ -5,6 +5,7 @@ import {
   WakeOverlayDebugConfig,
   WakeOverlayService,
 } from 'src-ui/app/services/overlay/wake-overlay.service';
+import { EnvironmentLuminanceObservationService } from 'src-ui/app/services/overlay-adaptation/environment-luminance-observation.service';
 import { SleepInductionOverlayAdaptationService } from 'src-ui/app/services/overlay-adaptation/sleep-induction-overlay-adaptation.service';
 
 @Component({
@@ -17,15 +18,18 @@ export class MiscTestingComponent {
   @Input() modal?: BaseModalComponent<any, any>;
   protected readonly wakeOverlayConfig;
   protected readonly wakeOverlayPreviewVisible;
+  protected readonly environmentObservationState;
   protected readonly sleepInductionAdaptationState;
 
   constructor(
     private steamService: SteamService,
     private wakeOverlay: WakeOverlayService,
+    private environmentLuminanceObservation: EnvironmentLuminanceObservationService,
     private sleepInductionOverlayAdaptation: SleepInductionOverlayAdaptationService
   ) {
     this.wakeOverlayConfig = this.wakeOverlay.debugConfig;
     this.wakeOverlayPreviewVisible = this.wakeOverlay.debugPreviewVisible;
+    this.environmentObservationState = this.environmentLuminanceObservation.debugState;
     this.sleepInductionAdaptationState = this.sleepInductionOverlayAdaptation.debugState;
   }
 
@@ -65,5 +69,17 @@ export class MiscTestingComponent {
 
   async setAdaptationReliable(reliable: boolean) {
     await this.sleepInductionOverlayAdaptation.setDebugObservationReliable(reliable);
+  }
+
+  async captureEnvironmentLuminance() {
+    await this.environmentLuminanceObservation.captureOnce('manual');
+  }
+
+  async toggleEnvironmentObservationPolling() {
+    if (this.environmentLuminanceObservation.debugStateSync.polling) {
+      this.environmentLuminanceObservation.stopPolling();
+      return;
+    }
+    await this.environmentLuminanceObservation.startPolling();
   }
 }
