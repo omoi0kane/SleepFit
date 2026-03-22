@@ -60,3 +60,8 @@
 .debug-field input {
   width: 100%;
 }
+
+.debug-field--checkbox input {
+  width: auto;
+  align-self: flex-start;
+}

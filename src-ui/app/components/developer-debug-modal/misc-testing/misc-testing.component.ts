@@ -5,6 +5,7 @@ import {
   WakeOverlayDebugConfig,
   WakeOverlayService,
 } from 'src-ui/app/services/overlay/wake-overlay.service';
+import { SleepInductionOverlayAdaptationService } from 'src-ui/app/services/overlay-adaptation/sleep-induction-overlay-adaptation.service';
 
 @Component({
   selector: 'app-misc-testing',
@@ -16,13 +17,16 @@ export class MiscTestingComponent {
   @Input() modal?: BaseModalComponent<any, any>;
   protected readonly wakeOverlayConfig;
   protected readonly wakeOverlayPreviewVisible;
+  protected readonly sleepInductionAdaptationState;
 
   constructor(
     private steamService: SteamService,
-    private wakeOverlay: WakeOverlayService
+    private wakeOverlay: WakeOverlayService,
+    private sleepInductionOverlayAdaptation: SleepInductionOverlayAdaptationService
   ) {
     this.wakeOverlayConfig = this.wakeOverlay.debugConfig;
     this.wakeOverlayPreviewVisible = this.wakeOverlay.debugPreviewVisible;
+    this.sleepInductionAdaptationState = this.sleepInductionOverlayAdaptation.debugState;
   }
 
   test() {
@@ -50,5 +54,16 @@ export class MiscTestingComponent {
     await this.wakeOverlay.updateDebugConfig({
       [field]: Number.isFinite(parsed) ? parsed : (fallback ?? 0),
     } as Partial<WakeOverlayDebugConfig>);
+  }
+
+  async setAdaptationLuminance(value: string, fallback = 0.18) {
+    const parsed = Number(value);
+    await this.sleepInductionOverlayAdaptation.setDebugEnvironmentLuminance(
+      Number.isFinite(parsed) ? parsed : fallback
+    );
+  }
+
+  async setAdaptationReliable(reliable: boolean) {
+    await this.sleepInductionOverlayAdaptation.setDebugObservationReliable(reliable);
   }
 }

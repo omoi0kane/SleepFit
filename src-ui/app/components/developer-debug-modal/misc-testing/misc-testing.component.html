@@ -196,4 +196,98 @@
       </div>
     }
   </div>
+
+  <div class="debug-section">
+    <div class="debug-section__header">
+      <div>
+        <h3>Sleep Induction Adaptation Debug</h3>
+        <p>v1a uses simulated environment luminance so we can validate the control loop first.</p>
+      </div>
+    </div>
+
+    @if (sleepInductionAdaptationState | async; as state) {
+      <div class="debug-grid">
+        <label class="debug-field">
+          <span>Advanced Mode</span>
+          <input type="text" [value]="state.advancedModeEnabled ? 'Enabled' : 'Disabled'" readonly />
+        </label>
+
+        <label class="debug-field">
+          <span>Active</span>
+          <input type="text" [value]="state.active ? 'Running' : 'Idle'" readonly />
+        </label>
+
+        <label class="debug-field">
+          <span>Phase</span>
+          <input type="text" [value]="state.phase" readonly />
+        </label>
+
+        <label class="debug-field">
+          <span>Progress</span>
+          <input type="text" [value]="(state.progress * 100 | number: '1.0-0') + '%'" readonly />
+        </label>
+
+        <label class="debug-field">
+          <span>Simulated Luminance</span>
+          <input
+            type="number"
+            [value]="state.debugEnvironmentLuminance"
+            step="0.01"
+            min="0"
+            max="1"
+            (input)="setAdaptationLuminance(adaptationLuminanceInput.value, state.debugEnvironmentLuminance)"
+            #adaptationLuminanceInput
+          />
+        </label>
+
+        <label class="debug-field debug-field--checkbox">
+          <span>Observation Reliable</span>
+          <input
+            type="checkbox"
+            [checked]="state.debugObservationReliable"
+            (change)="setAdaptationReliable(adaptationReliableInput.checked)"
+            #adaptationReliableInput
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Alpha Schedule</span>
+          <input type="text" [value]="state.alphaSchedule | number: '1.3-3'" readonly />
+        </label>
+
+        <label class="debug-field">
+          <span>Alpha Adapt</span>
+          <input type="text" [value]="state.alphaAdapt | number: '1.3-3'" readonly />
+        </label>
+
+        <label class="debug-field">
+          <span>Alpha Adapt Target</span>
+          <input type="text" [value]="state.alphaAdaptTarget | number: '1.3-3'" readonly />
+        </label>
+
+        <label class="debug-field">
+          <span>Alpha Total</span>
+          <input type="text" [value]="state.alphaTotal | number: '1.3-3'" readonly />
+        </label>
+
+        <label class="debug-field">
+          <span>Estimated Environment</span>
+          <input
+            type="text"
+            [value]="state.estimatedEnvironmentLuminance | number: '1.3-3'"
+            readonly
+          />
+        </label>
+
+        <label class="debug-field">
+          <span>Effective Software Brightness</span>
+          <input
+            type="text"
+            [value]="state.effectiveSoftwareBrightness | number: '1.0-1'"
+            readonly
+          />
+        </label>
+      </div>
+    }
+  </div>
 </div>

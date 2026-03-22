@@ -263,6 +263,7 @@ import { LighthouseForceStatePopoverComponent } from './components/lighthouse-fo
 import { SleepWakeTransitionService } from './services/sleep-wake-transition.service';
 import { SleepWakeTransitionScheduleAutomationService } from './services/sleep-wake-transition-schedule-automation.service';
 import { WakeOverlayService } from './services/overlay/wake-overlay.service';
+import { SleepInductionOverlayAdaptationService } from './services/overlay-adaptation/sleep-induction-overlay-adaptation.service';
 import { OyasumiVRSteamVRDevicePowerAutomationsService } from './services/power-automations/oyasumivr-steamvr-device-power-automations.service';
 import { SleepDevicePowerAutomationsService } from './services/power-automations/sleep-device-power-automations.service';
 import { TurnOffDevicesWhenChargingAutomationService } from './services/power-automations/turn-off-devices-when-charging-automation.service';
@@ -493,6 +494,7 @@ export class AppModule {
     private sleepPreparationService: SleepPreparationService,
     private sleepWakeTransitionService: SleepWakeTransitionService,
     private wakeOverlayService: WakeOverlayService,
+    private sleepInductionOverlayAdaptationService: SleepInductionOverlayAdaptationService,
     private pulsoidService: PulsoidService,
     private quitWithSteamVRService: QuitWithSteamVRService,
     private audioDeviceService: AudioDeviceService,
@@ -641,6 +643,10 @@ export class AppModule {
               this.sleepWakeTransitionService.init()
             ),
             this.logInit('Initializing wake overlay', this.wakeOverlayService.init()),
+            this.logInit(
+              'Initializing sleep induction overlay adaptation',
+              this.sleepInductionOverlayAdaptationService.init()
+            ),
             this.logInit('Initializing Pulsoid', this.pulsoidService.init()),
             this.logInit('Initializing quitting with SteamVR', this.quitWithSteamVRService.init()),
             this.logInit('Initializing audio device services', this.audioDeviceService.init()),

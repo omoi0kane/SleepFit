@@ -23,6 +23,7 @@ import { ResearchLogService } from './research-log.service';
 import { SimpleBrightnessControlService } from './brightness-control/simple-brightness-control.service';
 import { SoftwareBrightnessControlService } from './brightness-control/software-brightness-control.service';
 import { WakeOverlayService } from './overlay/wake-overlay.service';
+import { SleepInductionOverlayAdaptationService } from './overlay-adaptation/sleep-induction-overlay-adaptation.service';
 
 export type SleepWakeTransitionStatus =
   | 'idle'
@@ -110,7 +111,8 @@ export class SleepWakeTransitionService {
     private audioDevices: AudioDeviceService,
     private eventLog: EventLogService,
     private researchLog: ResearchLogService,
-    private wakeOverlay: WakeOverlayService
+    private wakeOverlay: WakeOverlayService,
+    private sleepInductionOverlayAdaptation: SleepInductionOverlayAdaptationService
   ) {}
 
   async init() {
@@ -210,6 +212,7 @@ export class SleepWakeTransitionService {
 
   public async applyManualSleepTransition(source: ResearchEventSource) {
     if (!this.config.enabled || !this.config.profiles.sleep.enabled) return;
+    await this.sleepInductionOverlayAdaptation.stop();
     await this.fadeOutWakeOverlayIfActive();
     await this.cancelCurrentRun('MANUAL_OVERRIDE');
     this.captureVolumeBaseline();
@@ -245,6 +248,7 @@ export class SleepWakeTransitionService {
 
   public async revertManualSleepTransition(source: ResearchEventSource) {
     if (!this.config.enabled || !this.config.profiles.wake.enabled) return;
+    await this.sleepInductionOverlayAdaptation.stop();
     await this.cancelCurrentRun('MANUAL_REVERT');
     const appliedDomains = this.toAppliedDomains('wake', this.config.profiles.wake.manualTarget);
     const run = this.createRunContext('wake', source, 'MANUAL', appliedDomains, this.idleState(), {
@@ -279,6 +283,7 @@ export class SleepWakeTransitionService {
     source: ResearchEventSource = 'automation'
   ) {
     if (!this.config.enabled || !this.config.profiles[profile].enabled) return;
+    await this.sleepInductionOverlayAdaptation.stop();
     if (profile === 'sleep') {
       await this.fadeOutWakeOverlayIfActive();
     }
@@ -340,6 +345,7 @@ export class SleepWakeTransitionService {
     this.clearRunTimers(run);
     this.cancelTransitions();
     this.currentRun = null;
+    await this.sleepInductionOverlayAdaptation.stop();
     this._state.next({
       status: 'cancelled',
       profile: run.profile,
@@ -381,12 +387,23 @@ export class SleepWakeTransitionService {
         this.researchLog.rememberSleepWakeTransitionDomain('brightness', profile, reason);
       }
       const hardwareAvailable = await firstValueFrom(this.hardwareBrightness.driverIsAvailable);
+      const useAdaptiveSleepInductionBrightness =
+        this.currentAdvancedMode &&
+        profile === 'sleep' &&
+        this.sleepInductionOverlayAdaptation.canManageSleepInduction();
       if (transitionMs > 0) {
         if (this.currentAdvancedMode) {
-          this.softwareBrightness.transitionBrightness(target.softwareBrightness, transitionMs, {
-            researchSource,
-            logReason: null,
-          });
+          if (useAdaptiveSleepInductionBrightness) {
+            await this.sleepInductionOverlayAdaptation.startSleepInduction(
+              transitionMs,
+              target.softwareBrightness
+            );
+          } else {
+            this.softwareBrightness.transitionBrightness(target.softwareBrightness, transitionMs, {
+              researchSource,
+              logReason: null,
+            });
+          }
           if (hardwareAvailable) {
             this.hardwareBrightness.transitionBrightness(target.hardwareBrightness, transitionMs, {
               researchSource,
@@ -400,11 +417,18 @@ export class SleepWakeTransitionService {
           });
         }
       } else if (this.currentAdvancedMode) {
-        await this.softwareBrightness.setBrightness(target.softwareBrightness, {
-          cancelActiveTransition: true,
-          researchSource,
-          logReason: null,
-        });
+        if (useAdaptiveSleepInductionBrightness) {
+          await this.sleepInductionOverlayAdaptation.startSleepInduction(
+            transitionMs,
+            target.softwareBrightness
+          );
+        } else {
+          await this.softwareBrightness.setBrightness(target.softwareBrightness, {
+            cancelActiveTransition: true,
+            researchSource,
+            logReason: null,
+          });
+        }
         if (hardwareAvailable) {
           await this.hardwareBrightness.setBrightness(target.hardwareBrightness, {
             cancelActiveTransition: true,
@@ -498,6 +522,10 @@ export class SleepWakeTransitionService {
       // This keeps the system from continuing to "fight" the user's intent.
       void this.cancelCurrentRun('USER_INTERVENTION');
       return;
+    }
+
+    if (domain === 'brightness' && this.sleepInductionOverlayAdaptation.activeSync) {
+      void this.sleepInductionOverlayAdaptation.stop();
     }
 
     if (!['manual_applied', 'reverting'].includes(this._state.value.status)) return;
